@@ -1,0 +1,9 @@
+{
+	"name" : "format-tiled",
+	"url" : "https://github.com/Yanrishatum/haxe-format-tiled",
+	"license" : "Public Domain",
+	"contributors" : ["Yanrishatum"],
+	"description" : "Tiled format support without additional dependencies (like OpenFL)",
+	"version" : "0.0.9",
+	"releasenote" : "Public unfinished version"
+}
