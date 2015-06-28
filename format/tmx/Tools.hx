@@ -46,4 +46,22 @@ class Tools
     Reflect.setProperty(output, "y", Math.ffloor(localId / tilesInLine) * tileset.tileHeight);
   }
   
+  /**
+   * Fixes Y coordinate of object which are incremented by map.tileHeight by Tiled. (ffs, Tiled devs, how old is this bug?)
+   * Research: Position incremented only for Tile object type?
+   * @param map
+   */
+  public static function fixObjectPlacement(map:TmxMap):Void
+  {
+    for (type in map.layers)
+    {
+      switch (type)
+      {
+        case TmxLayer.ObjectGroup(group):
+          for (obj in group.objects) obj.y -= map.tileHeight;
+        default:
+      }
+    }
+  }
+  
 }
