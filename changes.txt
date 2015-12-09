@@ -1,0 +1,11 @@
+0.1.0:
+* Tileset structure changed to all-optional since TSX does not contain `firstgid` and `source` and TSX-based Tileset in TMX contains only `firstgid` and `source`.
+* Support for TSX files (external Tilesets)
+* Tile animations support.
+* Tile objects flipping flags.
+* Fixed negative value bitwise operations (masking of IDs).
+* Fixed `Tools.getTilesetByGid` not returning last tileset.
+* Yet again fixed `Tools.fixObjectPlacement` since I figured out where was problem in positions.
+* Fixed typo in Tileset tile info resulting in objectgroup always be null even if collider present.
+* Added tools to get row/column/total tile count on tileset.
+* Added support for objects without ID (they are autoassigned same way as they do in Tiled).

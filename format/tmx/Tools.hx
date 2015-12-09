@@ -36,32 +36,74 @@ class Tools
       if (map.tilesets[i].firstGID > gid) return map.tilesets[i - 1];
       i++;
     }
-    return null;
+    return map.tilesets[i - 1];
   }
   
+  /**
+   * Sets `x` and `y` values to `output` relative to tile position on source image of tileset.
+   * Note: Currently do not supports non-zero margin and spacing values.
+   * @param tileset
+   * @param localId
+   * @param output
+   */
   public static function getTileUVByLidUnsafe(tileset:TmxTileset, localId:Int, output:Dynamic):Void
   {
+    // Must use spacing and margin values for calculation.
     var tilesInLine:Int = Math.floor(tileset.image.width / tileset.tileWidth);
     Reflect.setProperty(output, "x", (localId % tilesInLine) * tileset.tileWidth);
     Reflect.setProperty(output, "y", Math.ffloor(localId / tilesInLine) * tileset.tileHeight);
   }
   
   /**
-   * Fixes Y coordinate of object which are incremented by map.tileHeight by Tiled. (ffs, Tiled devs, how old is this bug?)
-   * Research: Position incremented only for Tile object type?
+   * Shifts origin of objects from bottom-left edge to top-left edge.
    * @param map
    */
   public static function fixObjectPlacement(map:TmxMap):Void
   {
+    var toRad:Float = Math.PI / 180;
     for (type in map.layers)
     {
       switch (type)
       {
         case TmxLayer.ObjectGroup(group):
-          for (obj in group.objects) obj.y -= map.tileHeight;
+          for (obj in group.objects)
+          {
+            var height:Null<Float> = obj.height;
+            if (height == null || height == 0)
+            {
+              switch (obj.objectType)
+              {
+                case TmxObjectType.Tile(gid):
+                  var tset:TmxTileset = getTilesetByGid(map, gid);
+                  if (tset != null && tset.tileHeight != null) height = tset.tileHeight;
+                  else height = map.tileHeight;
+                default:
+                  height = map.tileHeight;
+              }
+            }
+            var radians:Float = obj.rotation * toRad;
+            obj.x += Math.sin(radians) * height;
+            obj.y -= Math.cos(radians) * height;
+          }
         default:
       }
     }
+  }
+  
+  public static function getTilesCountInLineOnTileset(tileset:TmxTileset):Int
+  {
+    return Math.floor((tileset.image.width - tileset.margin * 2 + tileset.spacing) / (tileset.tileWidth + tileset.spacing));
+  }
+  
+  public static function getTilesCountInColumnOnTileset(tileset:TmxTileset):Int
+  {
+    return Math.floor((tileset.image.height - tileset.margin * 2 + tileset.spacing) / (tileset.tileHeight + tileset.spacing));
+  }
+  
+  public static function getTilesCountInTileset(tileset:TmxTileset):Int
+  {
+    return Math.floor((tileset.image.width - tileset.margin * 2 + tileset.spacing) / (tileset.tileWidth + tileset.spacing)) *
+           Math.floor((tileset.image.height - tileset.margin * 2 + tileset.spacing) / (tileset.tileHeight + tileset.spacing));
   }
   
 }

@@ -24,14 +24,21 @@ class Reader
   private var width:Int;
   private var height:Int;
   
+  private var lastObjectId:Int;
+  
   public function new(xml:Xml) 
   {
     this.xml = xml;
     this.f = new Fast(xml);
   }
   
+  /**
+   * Reads TMX file.
+   * @return
+   */
   public function read():TmxMap
   {
+    lastObjectId = 0;
     var map:Fast = f.node.map;
     
     var properties:Map<String, String> = resolveProperties(map);
@@ -42,7 +49,7 @@ class Reader
     {
       switch (element.name)
       {
-        case "tileset": tilesets.push(resolveTileset(element));
+        case "tileset": tilesets.push(resolveTileset(element, null));
         case "layer": layers.push(TmxLayer.TileLayer(resolveTileLayer(element)));
         case "objectgroup": layers.push(TmxLayer.ObjectGroup(resolveObjectGroup(element)));
         case "imagelayer": layers.push(TmxLayer.ImageLayer(resolveImageLayer(element)));
@@ -65,6 +72,16 @@ class Reader
       tilesets: tilesets,
       layers: layers
     };
+  }
+  
+  /**
+   * Reads TSX file.
+   * @param root Root Tileset into which read TSX data.
+   * @return Resulting TmxTileset. If `root` is null - returns new TmxTileset object, otherwise `root` is returned.
+   */
+  public inline function readTSX(root:TmxTileset = null):TmxTileset
+  {
+    return resolveTileset(f.node.tileset, root);
   }
   
   private inline function resolveOrientation(input:String):TmxOrientation
@@ -97,20 +114,23 @@ class Reader
     }
   }
   
-  private inline function resolveTileset(input:Fast):TmxTileset
+  private inline function resolveTileset(input:Fast, root:TmxTileset):TmxTileset
   {
     var properties:Map<String, String> = resolveProperties(input);
     var terrains:Array<TmxTerrain> = new Array();
+    var hasTerrains:Bool = input.hasNode.terraintypes;
     var tiles:Array<TmxTilesetTile> = new Array();
+    var hasTiles:Bool = input.hasNode.tile;
     var tileOffset:TmxTileOffset = null;
+    var hasTileOffset:Bool = input.hasNode.tileoffset;
     
-    if (input.hasNode.tileoffset)
+    if (hasTileOffset)
     {
       var node:Fast = input.node.tileoffset;
       tileOffset = { x:Std.parseInt(node.att.x), y:Std.parseInt(node.att.y) };
     }
     
-    if (input.hasNode.terraintypes)
+    if (hasTerrains)
     {
       for (node in input.node.terraintypes.nodes.terrain)
       {
@@ -118,28 +138,60 @@ class Reader
       }
     }
     
-    if (input.hasNode.tile)
+    if (hasTiles)
     {
       for (node in input.nodes.tile)
       {
+        var animation:Array<TmxTilesetTileFrame> = null;
+        if (node.hasNode.animation)
+        {
+          animation = new Array();
+          for (frameInfo in node.node.animation.nodes.frame)
+          {
+            animation.push( {
+              tileId: Std.parseInt(frameInfo.att.tileid),
+              duration: Std.parseInt(frameInfo.att.duration)
+            });
+          }
+        }
+        var objId:Int = lastObjectId;
         tiles.push( {
          id: Std.parseInt(node.att.id),
          terrain: node.has.terrain ? node.att.terrain : null,
          probability: node.has.probability ? Std.parseFloat(node.att.probability) : 0,
          properties: resolveProperties(node),
          image: node.hasNode.image ? resolveImage(node.node.image) : null,
-         objectGroup: node.hasNode.objecgroup ? resolveObjectGroup(node.node.objectgroup) : null
+         objectGroup: node.hasNode.objectgroup ? resolveObjectGroup(node.node.objectgroup) : null,
+         animation: animation
         });
+        lastObjectId = objId;
       }
+    }
+    
+    if (root != null)
+    {
+      root.firstGID = input.has.firstgid ? Std.parseInt(input.att.firstgid) : root.firstGID;
+      root.source = input.has.source ? input.att.source : root.source;
+      root.name = input.has.name ? input.att.name : root.name;
+      root.tileWidth = input.has.tilewidth ? Std.parseInt(input.att.tilewidth) : root.tileWidth;
+      root.tileHeight = input.has.tileheight ? Std.parseInt(input.att.tileheight) : root.tileHeight;
+      root.spacing = input.has.spacing ? Std.parseInt(input.att.spacing) : root.spacing;
+      root.margin = input.has.margin ? Std.parseInt(input.att.margin) : root.margin;
+      root.properties = input.hasNode.properties ? properties : root.properties;
+      root.image = input.hasNode.image ? resolveImage(input.node.image) : root.image;
+      if (hasTerrains) root.terrainTypes = terrains;
+      if (hasTiles) root.tiles = tiles;
+      if (hasTileOffset) root.tileOffset = tileOffset;
+      return root;
     }
     
     return
     {
-      firstGID: Std.parseInt(input.att.firstgid),
+      firstGID: input.has.firstgid ? Std.parseInt(input.att.firstgid) : null,
       source: input.has.source ? input.att.source : null,
-      name: input.att.name,
-      tileWidth: Std.parseInt(input.att.tilewidth),
-      tileHeight: Std.parseInt(input.att.tileheight),
+      name: input.has.name ? input.att.name : null,
+      tileWidth: input.has.tilewidth ? Std.parseInt(input.att.tilewidth) : null,
+      tileHeight: input.has.tileheight ? Std.parseInt(input.att.tileheight) : null,
       spacing: input.has.spacing ? Std.parseInt(input.att.spacing) : 0,
       margin: input.has.margin ? Std.parseInt(input.att.margin) : 0,
       properties: properties,
@@ -235,9 +287,11 @@ class Reader
           for (i in 0...tilesCount)
           {
             var tile:Int = d.readInt32();
+            var flipH:Bool = (tile & FLIPPED_HORIZONTALLY_FLAG) == FLIPPED_HORIZONTALLY_FLAG;
+            if (flipH) tile = -tile;
             tiles.push( {
               gid: tile & FLAGS_MASK,
-              flippedHorizontally: (tile & FLIPPED_HORIZONTALLY_FLAG) == FLIPPED_HORIZONTALLY_FLAG,
+              flippedHorizontally: flipH,
               flippedVertically: (tile & FLIPPED_VERTICALLY_FLAG) == FLIPPED_VERTICALLY_FLAG,
               flippedDiagonally: (tile & FLIPPED_DIAGONALLY_FLAG) == FLIPPED_DIAGONALLY_FLAG
             });
@@ -298,17 +352,30 @@ class Reader
     
     for (obj in input.nodes.object)
     {
+      var flippedV:Bool = false;
+      var flippedH:Bool = false;
       // Type specific data.
       var type:TmxObjectType = 
       if (obj.hasNode.ellipse) TmxObjectType.Ellipse;
-      else if (obj.has.gid) TmxObjectType.Tile(Std.parseInt(obj.att.gid));
+      else if (obj.has.gid)
+      {
+        #if neko
+        var f:Float = Std.parseFloat(obj.att.gid);
+        var gid:Int = f > 0x7FFFFFFF ? -Std.int(f - 2147483648) : Std.int(f); // `parseInt` on neko can't take Uint with value > INT_MAX_VALUE as input.
+        #else
+        var gid:Int = Std.parseInt(obj.att.gid);
+        #end
+        flippedH = (gid & FLIPPED_HORIZONTALLY_FLAG) == FLIPPED_HORIZONTALLY_FLAG;
+        if (flippedH) gid = -gid;
+        flippedV = (gid & FLIPPED_VERTICALLY_FLAG) == FLIPPED_VERTICALLY_FLAG;
+        TmxObjectType.Tile(gid & (FLAGS_MASK | FLIPPED_DIAGONALLY_FLAG));
+      }
       else if (obj.hasNode.polygon) TmxObjectType.Polygon(readPoints(obj.node.polygon));
       else if (obj.hasNode.polyline) TmxObjectType.Polyline(readPoints(obj.node.polyline));
       else TmxObjectType.Rectangle;
       
-      // Unificated data.
-      objects.push({
-        id: Std.parseInt(obj.att.id),
+      var object:TmxObject = {
+        id: obj.has.id ? Std.parseInt(obj.att.id) : lastObjectId + 1,
         name: obj.has.name ? obj.att.name : "",
         type: obj.has.type ? obj.att.type : "",
         x: obj.has.x ? Std.parseFloat(obj.att.x) : 0,
@@ -318,12 +385,17 @@ class Reader
         rotation: obj.has.rotation ? Std.parseFloat(obj.att.rotation) : 0,
         visible: obj.has.visible ? obj.att.visible == "1" : true,
         properties: resolveProperties(obj),
-        objectType: type
-      });
+        objectType: type,
+        flippedHorizontally: flippedH,
+        flippedVertically: flippedV
+      };
+      if (object.id > lastObjectId) lastObjectId = object.id;
+      // Unificated data.
+      objects.push(object);
     }
     
     return {
-      name:input.att.name,
+      name: input.has.name ? input.att.name : "",
       x: input.has.x ? Std.parseFloat(input.att.x) : 0,
       y: input.has.y ? Std.parseFloat(input.att.y) : 0,
       width: input.has.width ? Std.parseInt(input.att.width) : width,

@@ -83,23 +83,28 @@ typedef TmxMap =
   var layers:Array<TmxLayer>;
 }
 
-/** Tileset */
+/**
+ * Tileset
+ * TSX files does not contains firstGID and source.
+ * TMX Tilesets can be both full tilesets or point to TSX file. In that case it contains only firstGID and source. 
+ * You can merge TSX file TMX Tileset into one by using `new Reader(tsxXML).readTSX(tmxTileset);`.
+ */
 typedef TmxTileset =
 {
   /** The first global tile ID of this tileset (this global ID maps to the first tile in this tileset). */
-  var firstGID:Int;
+  @:optional var firstGID:Null<Int>;
   /** If this tileset is stored in an external TSX (Tile Set XML) file, this attribute refers to that file. That TSX file has the same structure as the <tileset> element described here. (There is the firstgid attribute missing and this source attribute is also not there. These two attributes are kept in the TMX map, since they are map specific.) */
   @:optional var source:String;
   /** The name of this tileset. */
-  var name:String;
+  @:optional var name:String;
   /** The (maximum) width of the tiles in this tileset. */
-  var tileWidth:Int;
+  @:optional var tileWidth:Null<Int>;
   /** The (maximum) height of the tiles in this tileset. */
-  var tileHeight:Int;
+  @:optional var tileHeight:Null<Int>;
   /** The spacing in pixels between the tiles in this tileset (applies to the tileset image). */
-  var spacing:Int;
+  @:optional var spacing:Null<Int>;
   /** The margin around the tiles in this tileset (applies to the tileset image). */
-  var margin:Int;
+  @:optional var margin:Null<Int>;
   
   /** This element is used to specify an offset in pixels, to be applied when drawing a tile from the related tileset. When not present, no offset is applied. Since 0.8 */
   @:optional var tileOffset:TmxTileOffset;
@@ -181,10 +186,31 @@ typedef TmxTilesetTile =
   @:optional var probability:Float;
   
   @:optional var properties:Map<String, String>;
-  /** Since 0.9 */
+  /**
+   * Since 0.9
+   */
   @:optional var image:TmxImage;
-  /** Since 0.10 */
+  /**
+   * Since 0.10.
+   * This group represents collision of tile and never contains Tile object type.
+   */
   @:optional var objectGroup:TmxObjectGroup;
+  /**
+   * Since ???.
+   * Present, if tile does not static and contains animation.
+   */
+  @:optional var animation:Array<TmxTilesetTileFrame>;
+}
+
+/**
+ * Animation frame of a single tile in tileset.
+ */
+typedef TmxTilesetTileFrame =
+{
+  /** Tile id of frame. Id is local to Tileset and always part of that tileset. */
+  var tileId:Int;
+  /** Display duration of frame in milliseconds. */
+  var duration:Int;
 }
 
 enum TmxLayer
@@ -345,4 +371,8 @@ typedef TmxObject =
   var objectType:TmxObjectType;
   /** Object properties. */
   @:optional var properties:Map<String, String>;
+  /** Is tile flipped horizontally? Default: false */
+  @:optional var flippedHorizontally:Bool;
+  /** Is tile flipped vertically? Default: false */
+  @:optional var flippedVertically:Bool;
 }
