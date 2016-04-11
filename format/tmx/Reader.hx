@@ -444,7 +444,8 @@ class Reader
     {
       for (prop in input.node.properties.nodes.property)
       {
-        props.set(prop.att.name, prop.att.value);
+        if (prop.has.value) props.set(prop.att.name, prop.att.value);
+        else props.set(prop.att.name, prop.innerData);
       }
     }
     return props;
