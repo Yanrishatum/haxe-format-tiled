@@ -4,6 +4,6 @@
 	"license" : "Public Domain",
 	"contributors" : ["Yanrishatum"],
 	"description" : "Tiled format support without additional dependencies (like OpenFL)",
-	"version" : "0.1.0",
-	"releasenote" : "TSX support, animated tiles, flipping flags for objects, various fixes."
+	"version" : "1.0.1",
+	"releasenote" : "Fixed parameters parsing."
 }
