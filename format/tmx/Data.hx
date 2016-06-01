@@ -10,7 +10,7 @@ enum TmxOrientation
   Isometric;
   /** Since 0.9 */
   Staggered;
-  /** Since 0.11 (git) */
+  /** Since 0.11 */
   Hexagonal;
   
   Unknown(value:String);
@@ -30,12 +30,14 @@ enum TmxStaggerIndex
 {
   Even;
   Odd;
+  Unknown(value:String);
 }
 
-enum TmxStaggerDirection
+enum TmxStaggerAxis
 {
-  Rows;
-  Columns;
+  AxisX;
+  AxisY;
+  Unknown(value:String);
 }
 
 /** General .tmx map file */
@@ -52,14 +54,14 @@ typedef TmxMap =
   /**
    * The width of a tile.
    * 
-   * The tilewidth and tileheight properties determine the general grid size of the map.
+   * The tilewidth and tileheight properties determine the general grid size of the map.  
    * The individual tiles may have different sizes. Larger tiles will extend at the top and right (anchored to the bottom left).
    * */
   var tileWidth:Int;
   /**
    * The height of a tile.
    * 
-   * The tilewidth and tileheight properties determine the general grid size of the map.
+   * The tilewidth and tileheight properties determine the general grid size of the map.  
    * The individual tiles may have different sizes. Larger tiles will extend at the top and right (anchored to the bottom left).
    */
   var tileHeight:Int;
@@ -67,12 +69,18 @@ typedef TmxMap =
   @:optional var backgroundColor:Int;
   /** The order in which tiles on tile layers are rendered. Since 0.10, but only for orthogonal orientation. */
   @:optional var renderOrder:TmxRenderOrder;
-  /** Since 0.11 (git) */
+  /** For staggered and hexagonal maps, determines whether the "even" or "odd" indexes along the staggered axis are shifted. Since 0.11 */
   @:optional var staggerIndex:TmxStaggerIndex;
-  /** Since 0.11 (git) */
-  @:optional var staggerDirection:TmxStaggerDirection;
-  /** Since 0.11 (git) */
+  /**
+   * For staggered and hexagonal maps, determines which axis (x or y) is staggered. (since 0.11);
+   * Ex staggerDirection.
+   */
+  @:optional var staggerAxis:TmxStaggerAxis;
+  /** Only for hexagonal maps. Determines the width or height (depending on the staggered axis) of the tile's edge, in pixels. Since 0.11 */
   @:optional var hexSideLength:Int;
+  
+  /** Stores the next available ID for new objects. This number is stored to prevent reuse of the same ID after objects have been removed. (since 0.11) */
+  @:optional var nextObjectId:Int;
   
   /** Properties of the map */
   @:optional var properties:Map<String, String>;
@@ -84,10 +92,11 @@ typedef TmxMap =
 }
 
 /**
- * Tileset
- * TSX files does not contains firstGID and source.
- * TMX Tilesets can be both full tilesets or point to TSX file. In that case it contains only firstGID and source. 
- * You can merge TSX file TMX Tileset into one by using `new Reader(tsxXML).readTSX(tmxTileset);`.
+ * Tileset  
+ * TSX files does not contains firstGID and source.  
+ * TMX Tilesets can be both full tilesets or point to TSX file. In that case it contains only firstGID and source.  
+ * You can merge TSX file TMX Tileset into one by using `new Reader(tsxXML).readTSX(tmxTileset);`.  
+ * Since Tiled 0.15, image collection tilesets do not necessarily number their tiles consecutively since gaps can occur when removing tiles.
  */
 typedef TmxTileset =
 {
@@ -106,13 +115,18 @@ typedef TmxTileset =
   /** The margin around the tiles in this tileset (applies to the tileset image). */
   @:optional var margin:Null<Int>;
   
+  /** The number of tiles in this tileset (since 0.13) */
+  @:optional var tileCount:Int;
+  /** The number of tile columns in the tileset. For image collection tilesets it is editable and is used when displaying the tileset. (since 0.15) */
+  @:optional var columns:Int;
+  
   /** This element is used to specify an offset in pixels, to be applied when drawing a tile from the related tileset. When not present, no offset is applied. Since 0.8 */
   @:optional var tileOffset:TmxTileOffset;
   /** Since 0.8 */
   @:optional var properties:Map<String, String>;
   /**
-   * As of the current version of Tiled Qt, each tileset has a single image associated with it, 
-   * which is cut into smaller tiles based on the attributes defined on the tileset element. 
+   * As of the current version of Tiled Qt, each tileset has a single image associated with it,  
+   * which is cut into smaller tiles based on the attributes defined on the tileset element.  
    * Later versions may add support for adding multiple images to a single tileset, as is possible in Tiled Java.
    */
   @:optional var image:TmxImage;
@@ -133,8 +147,8 @@ typedef TmxTileOffset =
 }
 
 /**
- * As of the current version of Tiled Qt, each tileset has a single image associated with it, 
- * which is cut into smaller tiles based on the attributes defined on the tileset element. 
+ * As of the current version of Tiled Qt, each tileset has a single image associated with it,  
+ * which is cut into smaller tiles based on the attributes defined on the tileset element.  
  * Later versions may add support for adding multiple images to a single tileset, as is possible in Tiled Java.
  */
 typedef TmxImage =
@@ -147,7 +161,7 @@ typedef TmxImage =
   var source:String;
   /**
    * Defines a specific color that is treated as transparent (example value: "#FF00FF" for magenta). 
-   * Up until Tiled 0.10, this value is written out without a # but this is planned to change.
+   * Up until Tiled 0.10 (upd: 0.12), this value is written out without a # but this is planned to change.
    */
   @:optional var transparent:Null<Int>;
   /** The image width in pixels (optional, used for tile index correction when the image changes) */
@@ -196,8 +210,10 @@ typedef TmxTilesetTile =
    */
   @:optional var objectGroup:TmxObjectGroup;
   /**
-   * Since ???.
-   * Present, if tile does not static and contains animation.
+   * Since 0.10.
+   * Present, if tile does not static and contains animation.  
+   * Contains a list of animation frames.  
+   * As of Tiled 0.10, each tile can have exactly one animation associated with it. In the future, there could be support for multiple named animations on a tile.
    */
   @:optional var animation:Array<TmxTilesetTileFrame>;
 }
@@ -207,9 +223,9 @@ typedef TmxTilesetTile =
  */
 typedef TmxTilesetTileFrame =
 {
-  /** Tile id of frame. Id is local to Tileset and always part of that tileset. */
+  /** The local ID of a tile within the parent tileset. */
   var tileId:Int;
-  /** Display duration of frame in milliseconds. */
+  /** How long (in milliseconds) this frame should be displayed before advancing to the next frame. */
   var duration:Int;
 }
 
@@ -236,11 +252,18 @@ typedef TmxBaseLayer =
   @:optional var opacity:Float;
   /** Whether the layer is shown (1) or hidden (0). Defaults to 1. */
   @:optional var visible:Bool;
+  /** Rendering offset for this layer in pixels. Defaults to 0. (since 0.14) */
+  @:optional var offsetX:Int;
+  /** Rendering offset for this layer in pixels. Defaults to 0. (since 0.14) */
+  @:optional var offsetY:Int;
   
   @:optional var properties:Map<String, String>;
 }
 
-/** A layer consisting of a single image. */
+/**
+ * A layer consisting of a single image.
+ * Since 0.15 `x` and `y` position of layer is defined via `offsetX` and `offsetY`.
+ */
 typedef TmxImageLayer =
 {
   >TmxBaseLayer,
@@ -264,6 +287,8 @@ enum TmxDataEncoding
   Base64;
   /** Comma-separated-values data. Can be applied only for tile data. */
   CSV;
+  /** Unknown encoding */
+  Unknown(value:String);
 }
 
 /** Compression type for data. */
@@ -275,6 +300,8 @@ enum TmxDataCompression
   GZip;
   /** ZLib compression. */
   ZLib;
+  /** Unknown compression */
+  Unknown(value:String);
 }
 
 /**
@@ -315,10 +342,25 @@ typedef TmxTile =
   @:optional var flippedDiagonally:Bool;
 }
 
+/** Whether the objects are drawn according to the order of appearance ("index") or sorted by their y-coordinate ("topdown"). Defaults to "topdown". */
+enum TmxObjectGroupDrawOrder
+{
+  /** Objects should be drawn according to it's position in `objects` array. */
+  Index;
+  /** Objects should be drawn according to their Y-coordinate. Default value. */
+  Topdown;
+  /** Unknown draw order. */
+  Unknown(value:String);
+}
+
 /** Layer representing a group of objects. */
 typedef TmxObjectGroup =
 {
   >TmxBaseLayer,
+  /** The color used to display the objects in this group. */
+  @:optional var color:Int;
+  /** Whether the objects are drawn according to the order of appearance ("index") or sorted by their y-coordinate ("topdown"). Defaults to "topdown". */
+  @:optional var drawOrder:TmxObjectGroupDrawOrder;
   /** List of all objects. */
   @:optional var objects:Array<TmxObject>;
 }
@@ -363,7 +405,7 @@ typedef TmxObject =
   @:optional var width:Float;
   /** The height of the object in pixels (defaults to 0). */
   @:optional var height:Float;
-  /** The rotation of the object in degrees clockwise (defaults to 0). (Since 0.11/git) */
+  /** The rotation of the object in degrees clockwise (defaults to 0). (Since 0.10) */
   @:optional var rotation:Float;
   /** Whether the object is shown (1) or hidden (0). Defaults to 1. (since 0.9.0) */
   @:optional var visible:Bool;
@@ -376,3 +418,54 @@ typedef TmxObject =
   /** Is tile flipped vertically? Default: false */
   @:optional var flippedVertically:Bool;
 }
+/*
+abstract TmxPropertyList(TmxPropertyListData) to Map<String, String>
+{
+  public inline function new()
+  {
+    this = { types:new Map(), strings:new Map() };
+  }
+  
+  @:to
+  private static inline function toStringMap(list:TmxPropertyList):Map<String, String>
+  {
+    return this.strings;
+  }
+  
+  public inline function getBool(key:String):Bool
+  {
+    return this.strings.get(key) == "true";
+  }
+  
+  public inline function getInt(key:String):Int
+  {
+    if (this.types.get(key) == TmxPropertyType.PTInt) return Std.parseInt(this.strings.get(key));
+    return 0;
+  }
+  
+  public inline function getFloat(key:String):Int
+  {
+    var t:TmxPropertyType = this.types.get(key);
+    if (t == TmxPropertyType.PTFloat || t == TmxPropertyType.PTInt) return Std.parseFloat(this.strings.get(key));
+    return 0;
+  }
+  
+  public inline function getString(key:String):String
+  {
+    return this.strings.get(key);
+  
+}
+
+enum TmxPropertyType
+{
+  PTString;
+  PTInt;
+  PTBool;
+  PTFloat;
+}
+
+typedef TmxPropertyListData =
+{
+  var types:Map<String, TmxPropertyType>;
+  var strings:Map<String, String>;
+}*/

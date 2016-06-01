@@ -1,3 +1,8 @@
+1.1.1:
+* Support up to Tiled 0.11.
+* Properties aren't supported fully yet.
+* Fixed Flipping flags on CPP corrupting tile ID's.
+
 1.0.0:
 * Changed versioning method.
 * Fixed crash on parameters parsing, since they can contain it's value inside tag inner data, and not `value` attribute.

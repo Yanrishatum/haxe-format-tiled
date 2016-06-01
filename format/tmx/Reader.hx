@@ -70,7 +70,11 @@ class Reader
       renderOrder: map.has.renderorder ? resolveRenderOrder(map.att.renderorder) : TmxRenderOrder.RightDown,
       properties: properties,
       tilesets: tilesets,
-      layers: layers
+      layers: layers,
+      staggerIndex: map.has.staggerindex ? resolveStaggerIndex(map.att.staggerindex) : null,
+      staggerAxis: map.has.staggeraxis ? resolveStaggerAxis(map.att.staggeraxis) : null,
+      hexSideLength: map.has.hexsidelength ? Std.parseInt(map.att.hexsidelength) : 0,
+      nextObjectId: map.has.nextobjectid ? Std.parseInt(map.att.nextobjectid) : 0
     };
   }
   
@@ -82,6 +86,26 @@ class Reader
   public inline function readTSX(root:TmxTileset = null):TmxTileset
   {
     return resolveTileset(f.node.tileset, root);
+  }
+  
+  private inline function resolveStaggerIndex(input:String):TmxStaggerIndex
+  {
+    switch (input)
+    {
+      case "even": return TmxStaggerIndex.Even;
+      case "odd": return TmxStaggerIndex.Odd;
+      default: return TmxStaggerIndex.Unknown(input);
+    }
+  }
+  
+  private inline function resolveStaggerAxis(input:String):TmxStaggerAxis
+  {
+    switch (input)
+    {
+      case "x": return TmxStaggerAxis.AxisX;
+      case "y": return TmxStaggerAxis.AxisY;
+      default: return TmxStaggerAxis.Unknown(input);
+    }
   }
   
   private inline function resolveOrientation(input:String):TmxOrientation
@@ -179,6 +203,8 @@ class Reader
       root.margin = input.has.margin ? Std.parseInt(input.att.margin) : root.margin;
       root.properties = input.hasNode.properties ? properties : root.properties;
       root.image = input.hasNode.image ? resolveImage(input.node.image) : root.image;
+      root.tileCount = input.has.tilecount ? Std.parseInt(input.att.tilecount) : 0;
+      root.columns = input.has.columns ? Std.parseInt(input.att.columns) : 0;
       if (hasTerrains) root.terrainTypes = terrains;
       if (hasTiles) root.tiles = tiles;
       if (hasTileOffset) root.tileOffset = tileOffset;
@@ -196,6 +222,8 @@ class Reader
       margin: input.has.margin ? Std.parseInt(input.att.margin) : 0,
       properties: properties,
       image: input.hasNode.image ? resolveImage(input.node.image) : null,
+      tileCount: input.has.tilecount ? Std.parseInt(input.att.tilecount) : 0,
+      columns: input.has.columns ? Std.parseInt(input.att.columns) : 0,
       terrainTypes: terrains,
       tiles: tiles,
       tileOffset: tileOffset
@@ -298,6 +326,8 @@ class Reader
           }
           data = null;
         }
+      case TmxDataEncoding.Unknown(value):
+        throw "Unknown data encoding: " + value;
     }
     
     return {
@@ -328,6 +358,8 @@ class Reader
         return InflateImpl.run(i);
       case TmxDataCompression.None:
         return i.readAll();
+      case TmxDataCompression.Unknown(value):
+        throw "Unknown compression method: " + value;
     }
   }
   
@@ -337,6 +369,8 @@ class Reader
       name:input.att.name,
       x: input.has.x ? Std.parseFloat(input.att.x) : 0,
       y: input.has.y ? Std.parseFloat(input.att.y) : 0,
+      offsetX: input.has.offsetx ? Std.parseInt(input.att.offsetx) : 0,
+      offsetY: input.has.offsety ? Std.parseInt(input.att.offsety) : 0,
       width: input.has.width ? Std.parseInt(input.att.width) : width,
       height: input.has.height ? Std.parseInt(input.att.height) : height,
       opacity: input.has.opacity ? Std.parseFloat(input.att.opacity) : 1,
@@ -344,6 +378,16 @@ class Reader
       properties: resolveProperties(input),
       data: input.hasNode.data ? resolveData(input.node.data) : null
     };
+  }
+  
+  private inline function resolveDraworder(input:String):TmxObjectGroupDrawOrder
+  {
+    switch (input)
+    {
+      case "index": return TmxObjectGroupDrawOrder.Index;
+      case "topdown": return TmxObjectGroupDrawOrder.Topdown;
+      default: return TmxObjectGroupDrawOrder.Unknown(input);
+    }
   }
   
   private function resolveObjectGroup(input:Fast):TmxObjectGroup
@@ -359,7 +403,7 @@ class Reader
       if (obj.hasNode.ellipse) TmxObjectType.Ellipse;
       else if (obj.has.gid)
       {
-        #if neko
+        #if (neko || cpp)
         var f:Float = Std.parseFloat(obj.att.gid);
         var gid:Int = f > 0x7FFFFFFF ? -Std.int(f - 2147483648) : Std.int(f); // `parseInt` on neko can't take Uint with value > INT_MAX_VALUE as input.
         #else
@@ -398,11 +442,14 @@ class Reader
       name: input.has.name ? input.att.name : "",
       x: input.has.x ? Std.parseFloat(input.att.x) : 0,
       y: input.has.y ? Std.parseFloat(input.att.y) : 0,
+      offsetX: input.has.offsetx ? Std.parseInt(input.att.offsetx) : 0,
+      offsetY: input.has.offsety ? Std.parseInt(input.att.offsety) : 0,
       width: input.has.width ? Std.parseInt(input.att.width) : width,
       height: input.has.height ? Std.parseInt(input.att.height) : height,
       opacity: input.has.opacity ? Std.parseFloat(input.att.opacity) : 1,
       visible: input.has.visible ? input.att.visible == "1" : true,
       properties: resolveProperties(input),
+      drawOrder: input.has.draworder ? resolveDraworder(input.att.draworder) : TmxObjectGroupDrawOrder.Topdown,
       objects: objects
     };
   }
@@ -428,6 +475,8 @@ class Reader
       name:input.att.name,
       x: input.has.x ? Std.parseFloat(input.att.x) : 0,
       y: input.has.y ? Std.parseFloat(input.att.y) : 0,
+      offsetX: input.has.offsetx ? Std.parseInt(input.att.offsetx) : 0,
+      offsetY: input.has.offsety ? Std.parseInt(input.att.offsety) : 0,
       width: input.has.width ? Std.parseInt(input.att.width) : width,
       height: input.has.height ? Std.parseInt(input.att.height) : height,
       opacity: input.has.opacity ? Std.parseFloat(input.att.opacity) : 1,
