@@ -88,6 +88,36 @@ class Reader
     return resolveTileset(f.node.tileset, root);
   }
   
+  /**
+   * Reads objecttypes.xml file.
+   * @param root Optional root TMX file to propagate those types into. It uses `Tools.propagateObjectTypes` function with default propagation rules.
+   * @return Map with object type templates.
+   */
+  public function readObjectTypes(root:TmxMap = null):Map<String, TmxObjectTypeTemplate>
+  {
+    var result:Map<String, TmxObjectTypeTemplate> = new Map();
+    if (!f.hasNode.objecttypes) return result;
+    for (type in f.node.objecttypes.nodes.objecttype)
+    {
+      var props:Array<TmxObjectTypeProperty> = new Array();
+      for (prop in type.nodes.property)
+      {
+        props.push( {
+          name: prop.att.name,
+          type: prop.has.type ? prop.att.type : "string",
+          defaultValue: prop.has.resolve("default") ? prop.att.resolve("default") : null
+        });
+      }
+      result.set(type.att.name, {
+        name: type.att.name,
+        color: Std.parseInt("0x" + type.att.color.substr(1)),
+        properties: props
+      });
+    }
+    if (root != null) Tools.propagateObjectTypes(root, result);
+    return result;
+  }
+  
   private inline function resolveStaggerIndex(input:String):TmxStaggerIndex
   {
     switch (input)
@@ -186,7 +216,8 @@ class Reader
          properties: resolveProperties(node),
          image: node.hasNode.image ? resolveImage(node.node.image) : null,
          objectGroup: node.hasNode.objectgroup ? resolveObjectGroup(node.node.objectgroup) : null,
-         animation: animation
+         animation: animation,
+         type: node.has.type ? node.att.type : null
         });
         lastObjectId = objId;
       }
@@ -216,8 +247,8 @@ class Reader
       firstGID: input.has.firstgid ? Std.parseInt(input.att.firstgid) : null,
       source: input.has.source ? input.att.source : null,
       name: input.has.name ? input.att.name : null,
-      tileWidth: input.has.tilewidth ? Std.parseInt(input.att.tilewidth) : null,
-      tileHeight: input.has.tileheight ? Std.parseInt(input.att.tileheight) : null,
+      tileWidth: input.has.tilewidth ? Std.parseInt(input.att.tilewidth) : 0,
+      tileHeight: input.has.tileheight ? Std.parseInt(input.att.tileheight) : 0,
       spacing: input.has.spacing ? Std.parseInt(input.att.spacing) : 0,
       margin: input.has.margin ? Std.parseInt(input.att.margin) : 0,
       properties: properties,

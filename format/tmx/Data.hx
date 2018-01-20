@@ -186,6 +186,8 @@ typedef TmxTilesetTile =
 {
   /** The local tile ID within its tileset. */
   var id:Int;
+  
+  @:optional var type:String;
   /**
    * Defines the terrain type of each corner of the tile,
    * given as comma-separated indexes in the terrain types array in the order 
@@ -469,3 +471,17 @@ typedef TmxPropertyListData =
   var types:Map<String, TmxPropertyType>;
   var strings:Map<String, String>;
 }*/
+
+typedef TmxObjectTypeTemplate =
+{
+  var name:String;
+  var color:Int;
+  var properties:Array<TmxObjectTypeProperty>;
+}
+
+typedef TmxObjectTypeProperty =
+{
+  var name:String;
+  var type:String;
+  @:optional var defaultValue:String;
+}
