@@ -15,33 +15,33 @@ import haxe.zip.Uncompress;
  */
 class Reader
 {
-  private var xml:Xml;
-  private var f:Fast;
-  
   private var customUncompressors:Map<String, String->Bytes>;
   private var customEncoders:Map<String, Bytes->String->Array<TmxTile>>;
   
   private var width:Int;
   private var height:Int;
   
-  private var lastObjectId:Int;
+  /** For seamless TSX resolving during initial parsing. Should return corresponding TSX. Caching should be done from outside. */
+  public var resolveTSX:String->TmxTileset;
+  /** For seamless Template resolving during initial parsing. */
+  public var resolveTemplate:String->TmxObjectTemplate;
+  /** For seamless Type Template resolving during initial parsing. */
+  public var resolveTypeTemplate:String->TmxObjectTypeTemplate;
   
-  public function new(xml:Xml) 
+  public function new() 
   {
-    this.xml = xml;
-    this.f = new Fast(xml);
+    
   }
   
   /**
    * Reads TMX file.
    * @return
    */
-  public function read():TmxMap
+  public function read(xml:Xml):TmxMap
   {
-    lastObjectId = 0;
-    var map:Fast = f.node.map;
+    var map:Fast = new Fast(xml).node.map;
     
-    var properties:Map<String, String> = resolveProperties(map);
+    var properties:TmxProperties = resolveProperties(map);
     var tilesets:Array<TmxTileset> = new Array();
     var layers:Array<TmxLayer> = new Array();
     
@@ -50,9 +50,10 @@ class Reader
       switch (element.name)
       {
         case "tileset": tilesets.push(resolveTileset(element, null));
-        case "layer": layers.push(TmxLayer.TileLayer(resolveTileLayer(element)));
-        case "objectgroup": layers.push(TmxLayer.ObjectGroup(resolveObjectGroup(element)));
-        case "imagelayer": layers.push(TmxLayer.ImageLayer(resolveImageLayer(element)));
+        case "layer": layers.push(TmxLayer.LTileLayer(resolveTileLayer(element)));
+        case "objectgroup": layers.push(TmxLayer.LObjectGroup(resolveObjectGroup(element)));
+        case "imagelayer": layers.push(TmxLayer.LImageLayer(resolveImageLayer(element)));
+        case "group": layers.push(TmxLayer.LGroup(resolveGroup(element)));
       }
     }
     
@@ -74,7 +75,8 @@ class Reader
       staggerIndex: map.has.staggerindex ? resolveStaggerIndex(map.att.staggerindex) : null,
       staggerAxis: map.has.staggeraxis ? resolveStaggerAxis(map.att.staggeraxis) : null,
       hexSideLength: map.has.hexsidelength ? Std.parseInt(map.att.hexsidelength) : 0,
-      nextObjectId: map.has.nextobjectid ? Std.parseInt(map.att.nextobjectid) : 0
+      nextObjectId: map.has.nextobjectid ? Std.parseInt(map.att.nextobjectid) : 0,
+      infinite: map.has.infinite ? map.att.infinite == "1" : false
     };
   }
   
@@ -83,28 +85,44 @@ class Reader
    * @param root Root Tileset into which read TSX data.
    * @return Resulting TmxTileset. If `root` is null - returns new TmxTileset object, otherwise `root` is returned.
    */
-  public inline function readTSX(root:TmxTileset = null):TmxTileset
+  public inline function readTSX(xml:Xml, root:TmxTileset = null):TmxTileset
   {
-    return resolveTileset(f.node.tileset, root);
+    return resolveTileset(new Fast(xml).node.tileset, root);
   }
   
   /**
    * Reads objecttypes.xml file.
    * @param root Optional root TMX file to propagate those types into. It uses `Tools.propagateObjectTypes` function with default propagation rules.
-   * @return Map with object type templates.
+   * @return Map with object type templates. Always pass null, if using during resolveTypeTemplate
    */
-  public function readObjectTypes(root:TmxMap = null):Map<String, TmxObjectTypeTemplate>
+  public function readObjectTypes(xml:Xml, root:TmxMap = null):Map<String, TmxObjectTypeTemplate>
   {
     var result:Map<String, TmxObjectTypeTemplate> = new Map();
+    var f:Fast = new Fast(xml);
     if (!f.hasNode.objecttypes) return result;
     for (type in f.node.objecttypes.nodes.objecttype)
     {
       var props:Array<TmxObjectTypeProperty> = new Array();
       for (prop in type.nodes.property)
       {
+        var ptype:TmxPropertyType = 
+        if (prop.has.type)
+        {
+          switch (prop.att.type)
+          {
+            case "string": PTString;
+            case "int": PTInt;
+            case "float": PTFloat;
+            case "color": PTColor;
+            case "file": PTFile;
+            case "bool": PTBool;
+            default: PTString;
+          }
+        }
+        else PTString;
         props.push( {
           name: prop.att.name,
-          type: prop.has.type ? prop.att.type : "string",
+          type: ptype,
           defaultValue: prop.has.resolve("default") ? prop.att.resolve("default") : null
         });
       }
@@ -116,6 +134,46 @@ class Reader
     }
     if (root != null) Tools.propagateObjectTypes(root, result);
     return result;
+  }
+  
+  /**
+     Reads TX file.
+  **/
+  public function readTemplate(xml:Xml):TmxObjectTemplate
+  {
+    var f:Fast = new Fast(xml);
+    if (!f.hasNode.template) return null;
+    var input:Fast = f.node.template;
+    return {
+      tileset: input.hasNode.tileset ? resolveTileset(input.node.tileset, null) : null,
+      object: resolveObject(input.node.object)
+    };
+  }
+  
+  private function resolveGroup(input:Fast):TmxGroup
+  {
+    var layers:Array<TmxLayer> = new Array();
+    
+    for (element in input.elements)
+    {
+      switch (element.name)
+      {
+        case "layer": layers.push(TmxLayer.LTileLayer(resolveTileLayer(element)));
+        case "objectgroup": layers.push(TmxLayer.LObjectGroup(resolveObjectGroup(element)));
+        case "imagelayer": layers.push(TmxLayer.LImageLayer(resolveImageLayer(element)));
+        case "group": layers.push(TmxLayer.LGroup(resolveGroup(element)));
+      }
+    }
+    
+    return {
+      name: input.att.name,
+      offsetX: input.has.offsetx ? Std.parseInt(input.att.offsetx) : 0,
+      offsetY: input.has.offsety ? Std.parseInt(input.att.offsety) : 0,
+      opacity: input.has.opacity ? Std.parseFloat(input.att.opacity) : 1,
+      visible: input.has.visible ? input.att.visible == "1" : true,
+      properties: resolveProperties(input),
+      layers: layers
+    };
   }
   
   private inline function resolveStaggerIndex(input:String):TmxStaggerIndex
@@ -170,13 +228,17 @@ class Reader
   
   private inline function resolveTileset(input:Fast, root:TmxTileset):TmxTileset
   {
-    var properties:Map<String, String> = resolveProperties(input);
+    var properties:TmxProperties = resolveProperties(input);
     var terrains:Array<TmxTerrain> = new Array();
     var hasTerrains:Bool = input.hasNode.terraintypes;
     var tiles:Array<TmxTilesetTile> = new Array();
     var hasTiles:Bool = input.hasNode.tile;
     var tileOffset:TmxTileOffset = null;
     var hasTileOffset:Bool = input.hasNode.tileoffset;
+    var wangSets:Array<TmxWangSet> = new Array();
+    var hasWangSets:Bool = input.hasNode.wangsets;
+    var grid:TmxTilesetGrid = null;
+    var hasGrid:Bool = input.hasNode.grid;
     
     if (hasTileOffset)
     {
@@ -190,6 +252,24 @@ class Reader
       {
         terrains.push( { name:node.att.name, tile:Std.parseInt(node.att.tile), properties:resolveProperties(node) } );
       }
+    }
+    
+    if (hasWangSets)
+    {
+      for (node in input.node.wangsets.nodes.wangset)
+      {
+        wangSets.push(resolveWangSet(node));
+      }
+    }
+    
+    if (hasGrid)
+    {
+      var gnode:Fast = input.node.grid;
+      grid = {
+        width: Std.parseInt(gnode.att.width),
+        height: Std.parseInt(gnode.att.height),
+        orientation: resolveOrientation(gnode.att.orientation)
+      };
     }
     
     if (hasTiles)
@@ -208,7 +288,6 @@ class Reader
             });
           }
         }
-        var objId:Int = lastObjectId;
         tiles.push( {
          id: Std.parseInt(node.att.id),
          terrain: node.has.terrain ? node.att.terrain : null,
@@ -219,9 +298,16 @@ class Reader
          animation: animation,
          type: node.has.type ? node.att.type : null
         });
-        lastObjectId = objId;
       }
     }
+    
+    //if (root == null && input.has.source && resolveTSX != null)
+    //{
+      //root = resolveTSX(input.att.source);
+      //root.source = input.att.source;
+      //root.firstGID = input.has.firstgid ? Std.parseInt(input.att.firstgid) : null;
+      //return root;
+    //}
     
     if (root != null)
     {
@@ -239,10 +325,12 @@ class Reader
       if (hasTerrains) root.terrainTypes = terrains;
       if (hasTiles) root.tiles = tiles;
       if (hasTileOffset) root.tileOffset = tileOffset;
+      if (hasWangSets) root.wangSets = wangSets;
+      if (hasGrid) root.grid = grid;
       return root;
     }
     
-    return
+    var tset:TmxTileset =
     {
       firstGID: input.has.firstgid ? Std.parseInt(input.att.firstgid) : null,
       source: input.has.source ? input.att.source : null,
@@ -257,9 +345,62 @@ class Reader
       columns: input.has.columns ? Std.parseInt(input.att.columns) : 0,
       terrainTypes: terrains,
       tiles: tiles,
-      tileOffset: tileOffset
+      tileOffset: tileOffset,
+      grid: grid,
+      wangSets: wangSets
     };
     
+    if (tset.source != null && resolveTSX != null)
+    {
+      var tsx:TmxTileset = resolveTSX(tset.source);
+      Tools.applyTSX(tsx, tset);
+    }
+    
+    return tset;
+  }
+  
+  private function resolveWangSet(input:Fast):TmxWangSet
+  {
+    var corners:Array<TmxWangSetColor> = new Array();
+    var edges:Array<TmxWangSetColor> = new Array();
+    var tiles:Array<TmxWangSetTile> = new Array();
+    
+    for (node in input.nodes.wangcornercolor)
+    {
+      corners.push(resolveWangSetColor(node));
+    }
+    
+    for (node in input.nodes.wangedgecolor)
+    {
+      edges.push(resolveWangSetColor(node));
+    }
+    
+    for (node in input.nodes.wangtile)
+    {
+      tiles.push( {
+        tileID: node.has.tileid ? Std.parseInt(node.att.tileid) : 0,
+        wangID: node.has.wangid ? Std.parseInt(node.att.wangid) : 0
+      });
+    }
+    
+    return {
+      name: input.has.name ? input.att.name : null,
+      tile: input.has.tile ? Std.parseInt(input.att.tile) : 0,
+      corners: corners,
+      edges: edges,
+      tiles: tiles
+    };
+    
+  }
+  
+  private inline function resolveWangSetColor(input:Fast):TmxWangSetColor
+  {
+    return {
+      name: input.has.name ? input.att.name : null,
+      color: input.has.color ? resolveColor(input.att.color) : 0,
+      tile: input.has.tile ? Std.parseInt(input.att.tile) : 0,
+      probability: input.has.probability ? Std.parseFloat(input.att.probability) : 0
+    };
   }
   
   private function resolveImage(input:Fast):TmxImage
@@ -293,6 +434,7 @@ class Reader
         default: throw 'Unknown encoding "${input.att.encoding}"'; //encoding = TmxDataEncoding.Unknown(input.att.encoding);
       }
     }
+    
     var compression:TmxDataCompression = TmxDataCompression.None;
     if (input.has.compression)
     {
@@ -304,59 +446,146 @@ class Reader
       }
     }
     
+    var chunks:Array<TmxChunk> = null;
     var tiles:Array<TmxTile> = null;
-    var rawData:String = StringTools.trim(input.innerData);
     var data:Bytes = null;
+    
+    inline function getRawData():String
+    {
+      return StringTools.trim(input.innerData);
+    }
+    
+    inline function emptyChunk(chunk:Fast):TmxChunk
+    {
+      return {
+        x: chunk.has.x ? Std.parseInt(chunk.att.x) : 0,
+        y: chunk.has.y ? Std.parseInt(chunk.att.y) : 0,
+        width: chunk.has.width ? Std.parseInt(chunk.att.width) : 0,
+        height: chunk.has.height ? Std.parseInt(chunk.att.height) : 0,
+        tiles: new Array()
+      };
+    }
     
     switch (encoding)
     {
       case TmxDataEncoding.None:
         if (isTileData)
         {
-          tiles = new Array();
-          for (info in input.nodes.tile)
+          if (input.hasNode.chunk)
           {
-            // This tiles can have an flipped flags? No documentation about this.
-            tiles.push( { gid:Std.parseInt(info.att.gid), flippedVertically:false, flippedHorizontally:false, flippedDiagonally:false } );
+            // Infinite map data
+            chunks = new Array();
+            for (node in input.nodes.chunk)
+            {
+              var chunk:TmxChunk = emptyChunk(node);
+              var chunkTiles:Array<TmxTile> = chunk.tiles;
+              for (tile in node.nodes.tile)
+              {
+                chunkTiles.push( { gid:Std.parseInt(tile.att.gid), flippedVertically:false, flippedHorizontally:false, flippedDiagonally:false } );
+              }
+              chunks.push(chunk);
+            }
+          }
+          else
+          {
+            // Regular map data
+            tiles = new Array();
+            for (info in input.nodes.tile)
+            {
+              // This tiles can have flipped flags? No documentation about this.
+              tiles.push( { gid:Std.parseInt(info.att.gid), flippedVertically:false, flippedHorizontally:false, flippedDiagonally:false } );
+            }
           }
         }
         else
         {
-          if (compression == TmxDataCompression.None) data = Bytes.ofString(rawData);
-          else data = uncompressData(new StringInput(rawData), compression);
+          if (compression == TmxDataCompression.None) data = Bytes.ofString(getRawData());
+          else data = uncompressData(new StringInput(getRawData()), compression);
         }
       case TmxDataEncoding.CSV:
         if (isTileData)
         {
-          tiles = new Array();
-          var split:Array<String> = rawData.split(",");
-          for (str in split) tiles.push({ gid:Std.parseInt(str), flippedVertically:false, flippedHorizontally:false, flippedDiagonally:false });
+          // TODO: Optimize, avoid .split and work with string directly
+          if (input.hasNode.chunk)
+          {
+            // Infinite map data
+            chunks = new Array();
+            for (node in input.nodes.chunk)
+            {
+              var chunk:TmxChunk = emptyChunk(node);
+              var chunkTiles:Array<TmxTile> = chunk.tiles;
+              var split:Array<String> = StringTools.trim(node.innerData).split(",");
+              for (str in split) chunkTiles.push( { gid:Std.parseInt(str), flippedVertically:false, flippedHorizontally:false, flippedDiagonally:false } );
+              chunks.push(chunk);
+            }
+          }
+          else
+          {
+            tiles = new Array();
+            var split:Array<String> = getRawData().split(",");
+            for (str in split) tiles.push( { gid:Std.parseInt(str), flippedVertically:false, flippedHorizontally:false, flippedDiagonally:false } );
+          }
         }
         else throw "CSV encoding available only for tile data";
       case TmxDataEncoding.Base64:
-        data = haxe.crypto.Base64.decode(rawData);
-        if (compression != TmxDataCompression.None) data = uncompressData(new BytesInput(data), compression);
-        if (isTileData)
+        var tile:Int;
+        var flipH:Bool;
+        inline function parseTile():TmxTile
         {
-          tiles = new Array();
-          var tilesCount:Int = Std.int(data.length / 4);
-          var offset:Int = 0;
-          var d:BytesInput = new BytesInput(data);
-          d.bigEndian = false;
-          for (i in 0...tilesCount)
+          flipH = (tile & FLIPPED_HORIZONTALLY_FLAG) == FLIPPED_HORIZONTALLY_FLAG;
+          if (flipH) tile = -tile;
+          return {
+            gid: tile & FLAGS_MASK,
+            flippedHorizontally: flipH,
+            flippedVertically: (tile & FLIPPED_VERTICALLY_FLAG) == FLIPPED_VERTICALLY_FLAG,
+            flippedDiagonally: (tile & FLIPPED_DIAGONALLY_FLAG) == FLIPPED_DIAGONALLY_FLAG
+          };
+        }
+        
+        if (isTileData && input.hasNode.chunk)
+        {
+          chunks = new Array();
+          for (node in input.nodes.chunk)
           {
-            var tile:Int = d.readInt32();
-            var flipH:Bool = (tile & FLIPPED_HORIZONTALLY_FLAG) == FLIPPED_HORIZONTALLY_FLAG;
-            if (flipH) tile = -tile;
-            tiles.push( {
-              gid: tile & FLAGS_MASK,
-              flippedHorizontally: flipH,
-              flippedVertically: (tile & FLIPPED_VERTICALLY_FLAG) == FLIPPED_VERTICALLY_FLAG,
-              flippedDiagonally: (tile & FLIPPED_DIAGONALLY_FLAG) == FLIPPED_DIAGONALLY_FLAG
-            });
+            var chunk:TmxChunk = emptyChunk(node);
+            var chunkTiles:Array<TmxTile> = chunk.tiles;
+            
+            data = haxe.crypto.Base64.decode(StringTools.trim(node.innerData));
+            if (compression != TmxDataCompression.None) data = uncompressData(new BytesInput(data), compression);
+            var tilesCount:Int = Std.int(data.length / 4);
+            var d:BytesInput = new BytesInput(data);
+            d.bigEndian = false;
+            for (i in 0...tilesCount)
+            {
+              tile = d.readInt32();
+              chunkTiles.push(parseTile());
+            }
+            
+            chunks.push(chunk);
           }
           data = null;
         }
+        else
+        {
+          data = haxe.crypto.Base64.decode(getRawData());
+          if (compression != TmxDataCompression.None) data = uncompressData(new BytesInput(data), compression);
+          
+          if (isTileData)
+          {
+            tiles = new Array();
+            var tilesCount:Int = Std.int(data.length / 4);
+            var offset:Int = 0;
+            var d:BytesInput = new BytesInput(data);
+            d.bigEndian = false;
+            for (i in 0...tilesCount)
+            {
+              tile = d.readInt32();
+              tiles.push(parseTile());
+            }
+            data = null;
+          }
+        }
+        
       case TmxDataEncoding.Unknown(value):
         throw "Unknown data encoding: " + value;
     }
@@ -365,6 +594,7 @@ class Reader
       encoding: encoding,
       compression: compression,
       tiles: tiles,
+      chunks: chunks,
       data: data
     };
   }
@@ -396,7 +626,8 @@ class Reader
   
   private function resolveTileLayer(input:Fast):TmxTileLayer
   {
-    return {
+    // Workaround to HaxeFoundation/haxe#6822
+    var layer:TmxTileLayer = {
       name:input.att.name,
       x: input.has.x ? Std.parseFloat(input.att.x) : 0,
       y: input.has.y ? Std.parseFloat(input.att.y) : 0,
@@ -406,9 +637,10 @@ class Reader
       height: input.has.height ? Std.parseInt(input.att.height) : height,
       opacity: input.has.opacity ? Std.parseFloat(input.att.opacity) : 1,
       visible: input.has.visible ? input.att.visible == "1" : true,
-      properties: resolveProperties(input),
-      data: input.hasNode.data ? resolveData(input.node.data) : null
+      properties: resolveProperties(input)
     };
+    layer.data = input.hasNode.data ? resolveData(input.node.data) : null;
+    return layer;
   }
   
   private inline function resolveDraworder(input:String):TmxObjectGroupDrawOrder
@@ -427,49 +659,11 @@ class Reader
     
     for (obj in input.nodes.object)
     {
-      var flippedV:Bool = false;
-      var flippedH:Bool = false;
-      // Type specific data.
-      var type:TmxObjectType = 
-      if (obj.hasNode.ellipse) TmxObjectType.Ellipse;
-      else if (obj.has.gid)
-      {
-        #if (neko || cpp)
-        var f:Float = Std.parseFloat(obj.att.gid);
-        var gid:Int = f > 0x7FFFFFFF ? -Std.int(f - 2147483648) : Std.int(f); // `parseInt` on neko can't take Uint with value > INT_MAX_VALUE as input.
-        #else
-        var gid:Int = Std.parseInt(obj.att.gid);
-        #end
-        flippedH = (gid & FLIPPED_HORIZONTALLY_FLAG) == FLIPPED_HORIZONTALLY_FLAG;
-        if (flippedH) gid = -gid;
-        flippedV = (gid & FLIPPED_VERTICALLY_FLAG) == FLIPPED_VERTICALLY_FLAG;
-        TmxObjectType.Tile(gid & (FLAGS_MASK | FLIPPED_DIAGONALLY_FLAG));
-      }
-      else if (obj.hasNode.polygon) TmxObjectType.Polygon(readPoints(obj.node.polygon));
-      else if (obj.hasNode.polyline) TmxObjectType.Polyline(readPoints(obj.node.polyline));
-      else TmxObjectType.Rectangle;
-      
-      var object:TmxObject = {
-        id: obj.has.id ? Std.parseInt(obj.att.id) : lastObjectId + 1,
-        name: obj.has.name ? obj.att.name : "",
-        type: obj.has.type ? obj.att.type : "",
-        x: obj.has.x ? Std.parseFloat(obj.att.x) : 0,
-        y: obj.has.y ? Std.parseFloat(obj.att.y) : 0,
-        width: obj.has.width ? Std.parseFloat(obj.att.width) : 0,
-        height: obj.has.height ? Std.parseFloat(obj.att.height) : 0,
-        rotation: obj.has.rotation ? Std.parseFloat(obj.att.rotation) : 0,
-        visible: obj.has.visible ? obj.att.visible == "1" : true,
-        properties: resolveProperties(obj),
-        objectType: type,
-        flippedHorizontally: flippedH,
-        flippedVertically: flippedV
-      };
-      if (object.id > lastObjectId) lastObjectId = object.id;
-      // Unificated data.
-      objects.push(object);
+      objects.push(resolveObject(obj));
     }
     
-    return {
+    // Workaround to HaxeFoundation/haxe#6822
+    var group:TmxObjectGroup = {
       name: input.has.name ? input.att.name : "",
       x: input.has.x ? Std.parseFloat(input.att.x) : 0,
       y: input.has.y ? Std.parseFloat(input.att.y) : 0,
@@ -479,10 +673,79 @@ class Reader
       height: input.has.height ? Std.parseInt(input.att.height) : height,
       opacity: input.has.opacity ? Std.parseFloat(input.att.opacity) : 1,
       visible: input.has.visible ? input.att.visible == "1" : true,
-      properties: resolveProperties(input),
-      drawOrder: input.has.draworder ? resolveDraworder(input.att.draworder) : TmxObjectGroupDrawOrder.Topdown,
-      objects: objects
+      properties: resolveProperties(input)
     };
+    group.drawOrder = input.has.draworder ? resolveDraworder(input.att.draworder) : TmxObjectGroupDrawOrder.Topdown;
+    group.objects = objects;
+    return group;
+    
+  }
+  
+  private function resolveObject(obj:Fast):TmxObject
+  {
+    var flippedV:Bool = false;
+    var flippedH:Bool = false;
+    // Type specific data.
+    var type:TmxObjectType = 
+    if (obj.hasNode.ellipse)
+    {
+      TmxObjectType.OTEllipse;
+    }
+    else if (obj.has.gid)
+    {
+      #if (neko || cpp)
+      var f:Float = Std.parseFloat(obj.att.gid);
+      var gid:Int = f > 0x7FFFFFFF ? -Std.int(f - 2147483648) : Std.int(f); // `parseInt` on neko can't take Uint with value > INT_MAX_VALUE as input.
+      #else
+      var gid:Int = Std.parseInt(obj.att.gid);
+      #end
+      flippedH = (gid & FLIPPED_HORIZONTALLY_FLAG) == FLIPPED_HORIZONTALLY_FLAG;
+      if (flippedH) gid = -gid;
+      flippedV = (gid & FLIPPED_VERTICALLY_FLAG) == FLIPPED_VERTICALLY_FLAG;
+      TmxObjectType.OTTile(gid & (FLAGS_MASK | FLIPPED_DIAGONALLY_FLAG));
+    }
+    else if (obj.hasNode.polygon)
+    {
+      TmxObjectType.OTPolygon(readPoints(obj.node.polygon));
+    }
+    else if (obj.hasNode.polyline)
+    {
+      TmxObjectType.OTPolyline(readPoints(obj.node.polyline));
+    }
+    else if (obj.hasNode.text)
+    {
+      TmxObjectType.OTText(resolveText(obj.node.text));
+    }
+    //else if (obj.hasNode.image) { } // TODO: Also had no docs and questionable
+    else
+    {
+      TmxObjectType.OTRectangle;
+    }
+    
+    var object:TmxObject = {
+      id: Std.parseInt(obj.att.id), // if it's not here, you doing something wrong.
+      name: obj.has.name ? obj.att.name : "",
+      type: obj.has.type ? obj.att.type : "",
+      x: obj.has.x ? Std.parseFloat(obj.att.x) : 0,
+      y: obj.has.y ? Std.parseFloat(obj.att.y) : 0,
+      width: obj.has.width ? Std.parseFloat(obj.att.width) : 0,
+      height: obj.has.height ? Std.parseFloat(obj.att.height) : 0,
+      rotation: obj.has.rotation ? Std.parseFloat(obj.att.rotation) : 0,
+      visible: obj.has.visible ? obj.att.visible == "1" : true,
+      properties: resolveProperties(obj),
+      objectType: type,
+      flippedHorizontally: flippedH,
+      flippedVertically: flippedV,
+      template: obj.has.template ? obj.att.template : null
+    };
+    
+    if (object.type != null && object.type != "" && resolveTypeTemplate != null)
+    {
+      var template:TmxObjectTypeTemplate = resolveTypeTemplate(object.type);
+      Tools.applyObjectTypeTemplate(object, template);
+    }
+    
+    return object;
   }
   
   private function readPoints(input:Fast):Array<TmxPoint>
@@ -500,9 +763,28 @@ class Reader
     return arr;
   }
   
-  private function resolveImageLayer(input:Fast):TmxImageLayer
+  private function resolveText(input:Fast):TmxText
   {
     return {
+      fontFamily: input.has.fontfamily ? input.att.fontfamily : "sans-serif",
+      pixelSize: input.has.pixelsize ? Std.parseInt(input.att.pixelsize) : 16, // TODO: Is float?
+      wrap: input.has.wrap ? input.att.wrap == "1" : false,
+      color: input.has.color ? resolveColor(input.att.color) : 0,
+      bold: input.has.bold ? input.att.bold == "1" : false,
+      italic: input.has.italic ? input.att.italic == "1" : false,
+      underline: input.has.underline ? input.att.underline == "1" : false,
+      strikeout: input.has.strikeout ? input.att.strikeout == "1" : false,
+      kerning: input.has.kerning ? input.att.kerning == "1" : true,
+      halign: input.has.halign ? input.att.halign : TmxHAlign.Left,
+      valign: input.has.valign ? input.att.valign : TmxVAlign.Top,
+      text: input.innerData
+    }
+  }
+  
+  private function resolveImageLayer(input:Fast):TmxImageLayer
+  {
+    // Workaround to HaxeFoundation/haxe#6822
+    var layer:TmxImageLayer = {
       name:input.att.name,
       x: input.has.x ? Std.parseFloat(input.att.x) : 0,
       y: input.has.y ? Std.parseFloat(input.att.y) : 0,
@@ -513,19 +795,43 @@ class Reader
       opacity: input.has.opacity ? Std.parseFloat(input.att.opacity) : 1,
       visible: input.has.visible ? input.att.visible == "1" : true,
       properties: resolveProperties(input),
-      image: input.hasNode.image ? resolveImage(input.node.image) : null
     };
+    layer.image = input.hasNode.image ? resolveImage(input.node.image) : null;
+    return layer;
   }
   
-  private function resolveProperties(input:Fast):Map<String, String>
+  private function resolveProperties(input:Fast):TmxProperties
   {
-    var props:Map<String, String> = new Map();
+    var props:TmxProperties = new TmxProperties();
+    var value:String;
     if (input.hasNode.properties)
     {
       for (prop in input.node.properties.nodes.property)
       {
-        if (prop.has.value) props.set(prop.att.name, prop.att.value);
-        else props.set(prop.att.name, prop.innerData);
+        value = prop.has.value ? prop.att.value : prop.innerData;
+        if (prop.has.type)
+        {
+          switch(prop.att.type)
+          {
+            case "int": 
+              props.setRaw(prop.att.name, value, PTInt);
+            case "float":
+              props.setRaw(prop.att.name, value, PTFloat);
+            case "bool": 
+              props.setRaw(prop.att.name, value, PTBool);
+            case "color":
+              props.setRaw(prop.att.name, value, PTColor);
+            case "file":
+              props.setRaw(prop.att.name, value, PTFile);
+            default:
+              props.setRaw(prop.att.name, value, PTString);
+          }
+        }
+        else
+        {
+          props.setRaw(prop.att.name, value, PTString);
+        }
+        
       }
     }
     return props;

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+	<!-- NMML reference: https://gist.github.com/1763850 -->
+	
+	<!-- metadata, make sure 'package' is at least 3 segments (ie. com.mycompany.myproject) -->
+	<meta title="FormatTiledTest" package="FormatTiledTest" version="1.0.0" company="Yanrishatum" />
+	
+	<!-- output -->
+	<app main="Main" file="FormatTiledTest" path="bin" />
+	
+	<window background="#000000" fps="60" antialiasing="0" />
+	<window if="html5" resizable="false" borderless="false" />
+	<window width="1280" height="720" unless="mobile" />
+	<window orientation="landscape" vsync="false" antialiasing="0" if="cpp" />
+	
+	<!-- classpath, haxe libs -->
+	<source path="src" />
+  <source path="../" />
+	<haxelib name="openfl" />
+	
+	<!-- assets -->
+	<assets path="assets" />
+  
+	<haxedef name="openfl_always_render" />
+	
+	<!-- optimize output
+	<haxeflag name="-dce full" /> -->
+	
+</project>

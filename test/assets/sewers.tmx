@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" tiledversion="1.1.1" orientation="orthogonal" renderorder="right-down" width="50" height="50" tilewidth="24" tileheight="24" infinite="1" nextobjectid="1">
+ <tileset firstgid="1" name="sewer_tileset" tilewidth="24" tileheight="24" tilecount="72" columns="8">
+  <image source="sewer_tileset.png" trans="ff00ff" width="192" height="217"/>
+ </tileset>
+ <layer name="Bottom" width="50" height="50">
+  <data encoding="base64" compression="zlib">
+   <chunk x="0" y="0" width="16" height="16">
+   eJzjZWBg4ANiJSjmAWJeJDFlIJaBYkU0eWU0tfTWr4JFvwgQMwGxGJn2cwIxFxBzk6lfEIiFgFiYTP3omN76h1L8K6PFNTnxjxzXxMQ/svnKaHFNTPwjm6+MJ95wxR/IfDeo+SA5LQJYG0m/JhY5AJBFGTU=
+  </chunk>
+   <chunk x="16" y="0" width="16" height="16">
+   eJyTYWBgkEHCikDMA8S8RGIZCvVrAbEqFIPYanS2H5t+ESBmIhJj088JxFw4sDoaH5t+QSAWQsMaWMSEsOjXhIYjsRhdP6VYEoilgFiaTP0g/ysBsTKZ+mH+16aB34aj/wGGoBjD
+  </chunk>
+   <chunk x="32" y="0" width="16" height="16">
+   eJzjZWBg4IViPiBWQsLKQCxDAPMOcf1MSFiMDP1cSJgbqk8FiLWAWJsI/UJIWJgEe2FYCwsmxt5RPIpBGADIuxtd
+  </chunk>
+   <chunk x="48" y="0" width="16" height="16">
+   eJyTYWBgkGEgH8iM6h/VP6p/yOoHAG1pA4E=
+  </chunk>
+   <chunk x="0" y="16" width="16" height="16">
+   eJyTYWBgkBnFeLEkEEthwdJE6lcEYiUsWJkE/TxAzIuE+UjULwLETEhYjET9nEDMhYS5SdQvCMRuQCwEpYVJ0K8JxFpYsDad4n84YwCmQRvk
+  </chunk>
+   <chunk x="16" y="16" width="16" height="16">
+   eJyTYWBgkBnFo3gUj0gMAD9IHAE=
+  </chunk>
+   <chunk x="32" y="16" width="16" height="16">
+   eJyTYWBgkBnFo3gUj0gMAD9IHAE=
+  </chunk>
+   <chunk x="48" y="16" width="16" height="16">
+   eJyTYWBgkGEgH8iM6h/VP6p/yOoHAG1pA4E=
+  </chunk>
+   <chunk x="0" y="32" width="16" height="16">
+   eJyTYWBgkBnFo3gUj0gMAD9IHAE=
+  </chunk>
+   <chunk x="16" y="32" width="16" height="16">
+   eJyTYWBgkBnFo3gUj0gMAD9IHAE=
+  </chunk>
+   <chunk x="32" y="32" width="16" height="16">
+   eJyTYWBgkBnFo3gUj0gMAD9IHAE=
+  </chunk>
+   <chunk x="48" y="32" width="16" height="16">
+   eJyTYWBgkGEgH8iM6h/VP6p/yOoHAG1pA4E=
+  </chunk>
+   <chunk x="0" y="48" width="16" height="16">
+   eJyTYWBgkBlAPApGwSgYOAAAK8MDgQ==
+  </chunk>
+   <chunk x="16" y="48" width="16" height="16">
+   eJyTYWBgkBlAPApGwSgYOAAAK8MDgQ==
+  </chunk>
+   <chunk x="32" y="48" width="16" height="16">
+   eJyTYWBgkBlAPApGwSgYOAAAK8MDgQ==
+  </chunk>
+   <chunk x="48" y="48" width="16" height="16">
+   eJyTYWBgkGEgH8hQqH8UjIJRMHAAALUvAHE=
+  </chunk>
+  </data>
+ </layer>
+ <layer name="Top" width="50" height="50" opacity="0.49">
+  <data encoding="base64" compression="zlib">
+   <chunk x="0" y="0" width="16" height="16">
+   eJxjYBgFgwmwADErELORqZ8HiHmBmI9qLhoFwxkAAHz4ADc=
+  </chunk>
+   <chunk x="32" y="0" width="16" height="16">
+   eJxjYEAFZgyUgaGmXx+IjaHYBIhNSdRvDsTWQOwCpW1J1D8KRsFAAgAswwMF
+  </chunk>
+   <chunk x="0" y="16" width="16" height="16">
+   eJxjYBgFxAAWIGZFwmwk6ucBYl4kzEdV142CUUAeAADwwABb
+  </chunk>
+  </data>
+ </layer>
+</map>

@@ -1,3 +1,12 @@
+2.0.0:
+* Support up to Tiled 1.1
+* Breaking changes accross the board.
+* Support for infinite maps
+* Support for property types
+* Support for layer groups
+* Partial support for object templates
+* Added additonal resolvers for TSX/templates.
+
 1.1.1:
 * Support up to Tiled 0.11.
 * Properties aren't supported fully yet.
