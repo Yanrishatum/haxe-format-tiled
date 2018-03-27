@@ -630,6 +630,13 @@ class TmxProperties
     return names.indexOf(name) != -1;
   }
   
+  public function existsType(name:String, type:TmxPropertyType):Bool
+  {
+    var idx:Int = names.indexOf(name);
+    if (idx == -1) return false;
+    return types[idx] == type;
+  }
+  
   @:noCompletion
   public function setRaw(name:String, value:String, type:TmxPropertyType):Void
   {
@@ -787,6 +794,10 @@ class TmxProperties
     return types[idx];
   }
   
+  public inline function get(name:String):String return getString(name);
+  
+  public inline function keys():Iterator<String> return names.iterator();
+  
   public function getString(name:String):String
   {
     var idx:Int = names.indexOf(name);
@@ -818,11 +829,11 @@ class TmxProperties
   public function getFloat(name:String):Float
   {
     var idx:Int = names.indexOf(name);
-    if (idx == -1) return null;
+    if (idx == -1) return Math.NaN;
     var type:TmxPropertyType = types[idx];
     // TODO: Optimize
     if (type == TmxPropertyType.PTInt || type == TmxPropertyType.PTColor) return getInt(name);
-    if (type != TmxPropertyType.PTFloat) return null;
+    if (type != TmxPropertyType.PTFloat) return Math.NaN;
     
     var cached:Null<Int> = cache[idx];
     if (cached == null)
