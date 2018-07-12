@@ -1,0 +1,8 @@
+cpp
+cs
+out.hl
+cpp.exe
+cs.exe
+out.n
+output/*
+!output/.gitkeep

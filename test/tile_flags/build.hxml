@@ -1,0 +1,43 @@
+-cp ../..
+-cp .
+-main Main
+
+--each
+
+-D build_type=hl
+-hl out.hl
+
+--next
+-D build_type=cpp
+-dce full
+-cpp cpp
+
+--next
+-D build_type=neko
+-neko out.n
+
+# --next
+# -D build_type=js
+# -js out.js
+
+--next
+-D build_type=cs
+-cs cs
+
+--next
+-D build_type=interp
+--interp
+
+--next
+-cmd echo Running files
+-cmd hl out.hl
+-cmd cp cpp/Main.exe cpp.exe
+-cmd cpp.exe
+-cmd cp cs/bin/Main.exe cs.exe
+-cmd cs.exe
+-cmd neko out
+
+--next
+-D build_type=hl
+-D verify_mode
+--interp
