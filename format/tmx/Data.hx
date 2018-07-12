@@ -332,45 +332,76 @@ class TmxGroup
   public var layers:Array<TmxLayer>;
 }
 
-@:structInit
 class TmxBaseLayer
 {
   /** The name of the layer. */
   public var name:String;
   /** The x coordinate of the layer in tiles. Defaults to 0 and can no longer be changed in Tiled Qt. (Except ImageLayer) */
-  @:optional public var x:Float;
+  public var x:Null<Float>;
   /** The y coordinate of the layer in tiles. Defaults to 0 and can no longer be changed in Tiled Qt. (Except ImageLayer) */
-  @:optional public var y:Float;
+  public var y:Null<Float>;
   /** The width of the layer in tiles. Traditionally required, but as of Tiled Qt always the same as the map width. */
-  @:optional public var width:Int;
+  public var width:Null<Int>;
   /** The height of the layer in tiles. Traditionally required, but as of Tiled Qt always the same as the map height. */
-  @:optional public var height:Int;
+  public var height:Null<Int>;
   /** The opacity of the layer as a value from 0 to 1. Defaults to 1. */
-  @:optional public var opacity:Float;
+  public var opacity:Null<Float>;
   /** Whether the layer is shown (1) or hidden (0). Defaults to 1. */
-  @:optional public var visible:Bool;
+  public var visible:Null<Bool>;
   /** Rendering offset for this layer in pixels. Defaults to 0. (since 0.14) */
-  @:optional public var offsetX:Int;
+  public var offsetX:Null<Int>;
   /** Rendering offset for this layer in pixels. Defaults to 0. (since 0.14) */
-  @:optional public var offsetY:Int;
+  public var offsetY:Null<Int>;
   
-  @:optional public var properties:TmxProperties;// Map<String, String>;
+  public var properties:TmxProperties;// Map<String, String>;
+  
+  public function new(name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
+    width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
+  {
+    this.name = name;
+    this.x = x;
+    this.y = y;
+    this.offsetX = offsetX;
+    this.offsetY = offsetY;
+    this.width = width;
+    this.height = height;
+    this.opacity = opacity;
+    this.visible = visible;
+    this.properties = properties;
+  }
+  
 }
 
 /**
  * A layer consisting of a single image.
  * Since 0.15 `x` and `y` position of layer is defined via `offsetX` and `offsetY`.
  */
-@:structInit
+ 
 class TmxImageLayer extends TmxBaseLayer
 {
   @:optional public var image:TmxImage;
+  
+  public function new(image:TmxImage,
+    name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
+    width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
+  {
+    super(name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
+    this.image = image;
+  }
 }
 
 @:structInit
 class TmxTileLayer extends TmxBaseLayer
 {
   @:optional public var data:TmxData;
+  
+  public function new(data:TmxData,
+    name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
+    width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
+  {
+    super(name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
+    this.data = data;
+  }
 }
 
 /** Encoding of the data. */
@@ -472,15 +503,26 @@ enum TmxObjectGroupDrawOrder
 }
 
 /** Layer representing a group of objects. */
-@:structInit
+
 class TmxObjectGroup extends TmxBaseLayer
 {
   /** The color used to display the objects in this group. */
-  @:optional public var color:Int;
+  public var color:Null<Int>;
   /** Whether the objects are drawn according to the order of appearance ("index") or sorted by their y-coordinate ("topdown"). Defaults to "topdown". */
-  @:optional public var drawOrder:TmxObjectGroupDrawOrder;
+  public var drawOrder:TmxObjectGroupDrawOrder;
   /** List of all objects. */
-  @:optional public var objects:Array<TmxObject>;
+  public var objects:Array<TmxObject>;
+  
+  public function new(drawOrder:TmxObjectGroupDrawOrder, objects:Array<TmxObject>, color:Null<Int>, 
+    name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
+    width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
+  {
+    super(name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
+    this.color = color;
+    this.drawOrder = drawOrder;
+    this.objects = objects;
+  }
+  
 }
 
 /** Utility for x/y object. Used for Polygon and Polyline object types.*/

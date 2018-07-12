@@ -533,7 +533,8 @@ class Reader
         inline function parseTile():TmxTile
         {
           flipH = (tile & FLIPPED_HORIZONTALLY_FLAG) == FLIPPED_HORIZONTALLY_FLAG;
-          if (flipH) tile = -tile;
+          // TODO: [HashLink] Account for Int not being Int32, make proper fix.
+          if (flipH && tile < 0) tile = -tile;
           return {
             gid: tile & FLAGS_MASK,
             flippedHorizontally: flipH,
@@ -627,19 +628,20 @@ class Reader
   private function resolveTileLayer(input:Fast):TmxTileLayer
   {
     // Workaround to HaxeFoundation/haxe#6822
-    var layer:TmxTileLayer = {
-      name:input.att.name,
-      x: input.has.x ? Std.parseFloat(input.att.x) : 0,
-      y: input.has.y ? Std.parseFloat(input.att.y) : 0,
-      offsetX: input.has.offsetx ? Std.parseInt(input.att.offsetx) : 0,
-      offsetY: input.has.offsety ? Std.parseInt(input.att.offsety) : 0,
-      width: input.has.width ? Std.parseInt(input.att.width) : width,
-      height: input.has.height ? Std.parseInt(input.att.height) : height,
-      opacity: input.has.opacity ? Std.parseFloat(input.att.opacity) : 1,
-      visible: input.has.visible ? input.att.visible == "1" : true,
-      properties: resolveProperties(input)
-    };
-    layer.data = input.hasNode.data ? resolveData(input.node.data) : null;
+    var layer:TmxTileLayer = new TmxTileLayer(
+      (input.hasNode.data ? resolveData(input.node.data) : null),
+      (input.has.name ? input.att.name : ""),
+      (input.has.x ? Std.parseFloat(input.att.x) : 0),
+      (input.has.y ? Std.parseFloat(input.att.y) : 0),
+      (input.has.offsetx ? Std.parseInt(input.att.offsetx) : 0),
+      (input.has.offsety ? Std.parseInt(input.att.offsety) : 0),
+      (input.has.width ? Std.parseInt(input.att.width) : width),
+      (input.has.height ? Std.parseInt(input.att.height) : height),
+      (input.has.opacity ? Std.parseFloat(input.att.opacity) : 1),
+      (input.has.visible ? input.att.visible == "1" : true),
+      resolveProperties(input)
+    );
+    
     return layer;
   }
   
@@ -663,20 +665,24 @@ class Reader
     }
     
     // Workaround to HaxeFoundation/haxe#6822
-    var group:TmxObjectGroup = {
-      name: input.has.name ? input.att.name : "",
-      x: input.has.x ? Std.parseFloat(input.att.x) : 0,
-      y: input.has.y ? Std.parseFloat(input.att.y) : 0,
-      offsetX: input.has.offsetx ? Std.parseInt(input.att.offsetx) : 0,
-      offsetY: input.has.offsety ? Std.parseInt(input.att.offsety) : 0,
-      width: input.has.width ? Std.parseInt(input.att.width) : width,
-      height: input.has.height ? Std.parseInt(input.att.height) : height,
-      opacity: input.has.opacity ? Std.parseFloat(input.att.opacity) : 1,
-      visible: input.has.visible ? input.att.visible == "1" : true,
-      properties: resolveProperties(input)
-    };
-    group.drawOrder = input.has.draworder ? resolveDraworder(input.att.draworder) : TmxObjectGroupDrawOrder.Topdown;
-    group.objects = objects;
+    var group:TmxObjectGroup = new TmxObjectGroup(
+      (input.has.draworder ? resolveDraworder(input.att.draworder) : TmxObjectGroupDrawOrder.Topdown),
+      objects,
+      (input.has.color ? Std.parseInt(input.att.color) : null),
+      
+      (input.has.name ? input.att.name : ""),
+      (input.has.x ? Std.parseFloat(input.att.x) : 0),
+      (input.has.y ? Std.parseFloat(input.att.y) : 0),
+      (input.has.offsetx ? Std.parseInt(input.att.offsetx) : 0),
+      (input.has.offsety ? Std.parseInt(input.att.offsety) : 0),
+      (input.has.width ? Std.parseInt(input.att.width) : width),
+      (input.has.height ? Std.parseInt(input.att.height) : height),
+      (input.has.opacity ? Std.parseFloat(input.att.opacity) : 1),
+      (input.has.visible ? input.att.visible == "1" : true),
+      resolveProperties(input)
+    );
+    // group.drawOrder = input.has.draworder ? resolveDraworder(input.att.draworder) : TmxObjectGroupDrawOrder.Topdown;
+    // group.objects = objects;
     return group;
     
   }
@@ -783,20 +789,20 @@ class Reader
   
   private function resolveImageLayer(input:Fast):TmxImageLayer
   {
-    // Workaround to HaxeFoundation/haxe#6822
-    var layer:TmxImageLayer = {
-      name:input.att.name,
-      x: input.has.x ? Std.parseFloat(input.att.x) : 0,
-      y: input.has.y ? Std.parseFloat(input.att.y) : 0,
-      offsetX: input.has.offsetx ? Std.parseInt(input.att.offsetx) : 0,
-      offsetY: input.has.offsety ? Std.parseInt(input.att.offsety) : 0,
-      width: input.has.width ? Std.parseInt(input.att.width) : width,
-      height: input.has.height ? Std.parseInt(input.att.height) : height,
-      opacity: input.has.opacity ? Std.parseFloat(input.att.opacity) : 1,
-      visible: input.has.visible ? input.att.visible == "1" : true,
-      properties: resolveProperties(input),
-    };
-    layer.image = input.hasNode.image ? resolveImage(input.node.image) : null;
+    var layer:TmxImageLayer = new TmxImageLayer(
+      (input.hasNode.image ? resolveImage(input.node.image) : null),
+      
+      (input.has.name    ? input.att.name : ""),
+      (input.has.x       ? Std.parseFloat(input.att.x) : 0),
+      (input.has.y       ? Std.parseFloat(input.att.y) : 0),
+      (input.has.offsetx ? Std.parseInt(input.att.offsetx) : 0),
+      (input.has.offsety ? Std.parseInt(input.att.offsety) : 0),
+      (input.has.width   ? Std.parseInt(input.att.width) : width),
+      (input.has.height  ? Std.parseInt(input.att.height) : height),
+      (input.has.opacity ? Std.parseFloat(input.att.opacity) : 1),
+      (input.has.visible ? input.att.visible == "1" : true),
+      resolveProperties(input)
+    );
     return layer;
   }
   
