@@ -706,7 +706,8 @@ class Reader
       var gid:Int = Std.parseInt(obj.att.gid);
       #end
       flippedH = (gid & FLIPPED_HORIZONTALLY_FLAG) == FLIPPED_HORIZONTALLY_FLAG;
-      if (flippedH) gid = -gid;
+      // TODO: [HashLink] Account for Int not being Int32, make proper fix.
+      if (flippedH && gid < 0) gid = -gid;
       flippedV = (gid & FLIPPED_VERTICALLY_FLAG) == FLIPPED_VERTICALLY_FLAG;
       TmxObjectType.OTTile(gid & (FLAGS_MASK | FLIPPED_DIAGONALLY_FLAG));
     }
