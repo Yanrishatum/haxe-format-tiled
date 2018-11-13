@@ -644,7 +644,25 @@ enum TmxPropertyType
   PTColor; // Is just an Int
 }
 
-class TmxProperties
+@:forward
+abstract TmxProperties(ImplTmxProperties)
+{
+  
+  public inline function new() this = new ImplTmxProperties();
+  
+  @:arrayAccess
+  private inline function _get(v:String):String return this.get(v);
+  
+  @:arrayAccess
+  private inline function _set(k:String, v:String):String
+  {
+    this.setString(k, v);
+    return v;
+  }
+  
+}
+
+private class ImplTmxProperties
 {
   private var names:Array<String>;
   private var types:Array<TmxPropertyType>;

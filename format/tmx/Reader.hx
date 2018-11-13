@@ -5,7 +5,11 @@ import haxe.io.BytesInput;
 import haxe.io.BytesOutput;
 import haxe.io.Input;
 import haxe.io.StringInput;
+#if (haxe_ver >= 4)
+import haxe.xml.Access as Fast;
+#else
 import haxe.xml.Fast;
+#end
 import haxe.zip.InflateImpl;
 import haxe.zip.Uncompress;
 
