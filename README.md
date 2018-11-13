@@ -1,6 +1,10 @@
 # haxe-format-tiled
 Tiled format support without additional dependencies (like OpenFL).
 
+## Feature-support
+* Currently library supports Tiled 1.1
+When Tiled will get new features that you will need to utilize, please create an Issue (or better a PR ;) ). I do not watch Tiled development closely, but will provide library updates for new features.
+
 ## Usage notes
 * 2.0 version got quite a few changes in order to bring Tiled 1.1 support.  
 * Apart from breaking changes there Reader works a bit differently now, and you can use same reader to parse all maps, TSX and template files from single Reader instead of need to create new one each time.  
