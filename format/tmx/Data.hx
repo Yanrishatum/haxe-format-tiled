@@ -340,6 +340,8 @@ class TmxGroup
 
 class TmxBaseLayer
 {
+  /** Unique ID of the layer. Each layer that added to a map gets a unique id. Even if a layer is deleted, no layer ever gets the same ID. Can not be changed in Tiled. (since Tiled 1.2) */
+  public var id:Int;
   /** The name of the layer. */
   public var name:String;
   /** The x coordinate of the layer in tiles. Defaults to 0 and can no longer be changed in Tiled Qt. (Except ImageLayer) */
@@ -361,9 +363,10 @@ class TmxBaseLayer
   
   public var properties:TmxProperties;// Map<String, String>;
   
-  public function new(name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
+  public function new(id:Int, name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
     width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
   {
+    this.id = id;
     this.name = name;
     this.x = x;
     this.y = y;
@@ -388,10 +391,10 @@ class TmxImageLayer extends TmxBaseLayer
   @:optional public var image:TmxImage;
   
   public function new(image:TmxImage,
-    name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
+    id:Int, name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
     width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
   {
-    super(name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
+    super(id, name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
     this.image = image;
   }
 }
@@ -402,10 +405,10 @@ class TmxTileLayer extends TmxBaseLayer
   @:optional public var data:TmxData;
   
   public function new(data:TmxData,
-    name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
+    id:Int, name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
     width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
   {
-    super(name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
+    super(id, name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
     this.data = data;
   }
 }
@@ -520,10 +523,10 @@ class TmxObjectGroup extends TmxBaseLayer
   public var objects:Array<TmxObject>;
   
   public function new(drawOrder:TmxObjectGroupDrawOrder, objects:Array<TmxObject>, color:Null<Int>, 
-    name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
+    id:Int, name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
     width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
   {
-    super(name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
+    super(id, name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
     this.color = color;
     this.drawOrder = drawOrder;
     this.objects = objects;

@@ -634,6 +634,7 @@ class Reader
     // Workaround to HaxeFoundation/haxe#6822
     var layer:TmxTileLayer = new TmxTileLayer(
       (input.hasNode.data ? resolveData(input.node.data) : null),
+      (input.has.id ? Std.parseInt(input.att.id) : 0),
       (input.has.name ? input.att.name : ""),
       (input.has.x ? Std.parseFloat(input.att.x) : 0),
       (input.has.y ? Std.parseFloat(input.att.y) : 0),
@@ -673,7 +674,7 @@ class Reader
       (input.has.draworder ? resolveDraworder(input.att.draworder) : TmxObjectGroupDrawOrder.Topdown),
       objects,
       (input.has.color ? Std.parseInt(input.att.color) : null),
-      
+      (input.has.id ? Std.parseInt(input.att.id) : 0),
       (input.has.name ? input.att.name : ""),
       (input.has.x ? Std.parseFloat(input.att.x) : 0),
       (input.has.y ? Std.parseFloat(input.att.y) : 0),
@@ -795,7 +796,7 @@ class Reader
   {
     var layer:TmxImageLayer = new TmxImageLayer(
       (input.hasNode.image ? resolveImage(input.node.image) : null),
-      
+      (input.has.id    ? Std.parseInt(input.att.id) : 0),
       (input.has.name    ? input.att.name : ""),
       (input.has.x       ? Std.parseFloat(input.att.x) : 0),
       (input.has.y       ? Std.parseFloat(input.att.y) : 0),
