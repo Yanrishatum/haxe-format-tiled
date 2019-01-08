@@ -618,7 +618,7 @@ class TmxText
   public var strikeout:Bool;
   /** Whether kerning should be used while rendering the text (1) or not (0). Default to 1. */
   public var kerning:Bool;
-  /** Horizontal alignment of the text within the object (left (default), center or right) */
+  /** Horizontal alignment of the text within the object (left (default), center, right or justify (since Tiled 1.2.1)) */
   public var halign:TmxHAlign;
   /** Vertical alignment of the text within the object (top (default), center or bottom) */
   public var valign:TmxVAlign;
@@ -632,6 +632,7 @@ abstract TmxHAlign(String) from String to String
   var Left = "left";
   var Center = "center";
   var Right = "right";
+  var Justify = "justify";
 }
 
 @:enum
