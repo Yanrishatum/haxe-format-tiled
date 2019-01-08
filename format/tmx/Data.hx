@@ -46,6 +46,8 @@ class TmxMap
 {
   /** The TMX format version, generally 1.0. */
   public var version:String;
+  /** The Tiled version used to save the file (since Tiled 1.0.1). May be a date (for snapshot builds). */
+  public var tiledVersion:String;
   /** Map orientation. */
   public var orientation:TmxOrientation;
   /** The map width in tiles. */

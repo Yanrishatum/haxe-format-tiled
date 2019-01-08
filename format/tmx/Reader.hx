@@ -66,6 +66,7 @@ class Reader
     
     return {
       version: map.att.version,
+      tiledVersion: map.has.tiledversion ? map.att.tiledversion : "",
       orientation: resolveOrientation(map.att.orientation),
       width: width,
       height: height,
