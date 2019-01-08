@@ -83,6 +83,10 @@ class TmxMap
   /** Stores the next available ID for new objects. This number is stored to prevent reuse of the same ID after objects have been removed. (since 0.11) */
   @:optional public var nextObjectId:Int;
   
+  /**  Stores the next available ID for new layers. This number is stored to prevent reuse of the same ID after layers have been removed. (since 1.2)
+   */
+  @:optional public var nextLayerId:Int;
+
   /** Properties of the map */
   @:optional public var properties:TmxProperties;// Map<String, String>;
   

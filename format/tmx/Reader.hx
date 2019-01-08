@@ -80,6 +80,7 @@ class Reader
       staggerAxis: map.has.staggeraxis ? resolveStaggerAxis(map.att.staggeraxis) : null,
       hexSideLength: map.has.hexsidelength ? Std.parseInt(map.att.hexsidelength) : 0,
       nextObjectId: map.has.nextobjectid ? Std.parseInt(map.att.nextobjectid) : 0,
+      nextLayerId: map.has.nextlayerid ? Std.parseInt(map.att.nextlayerid): 0,
       infinite: map.has.infinite ? map.att.infinite == "1" : false
     };
   }
