@@ -321,7 +321,7 @@ enum TmxLayer
 class TmxGroup
 {
   /** Unique ID of the layer. Each layer that added to a map gets a unique id. Even if a layer is deleted, no layer ever gets the same ID. Can not be changed in Tiled. (since Tiled 1.2) */
-  @:optional public var id:Int;
+  public var id:Int;
   /** The name of the group layer. */
   public var name:String;
   /** Rendering offset of the group layer in pixels. Defaults to 0. */
