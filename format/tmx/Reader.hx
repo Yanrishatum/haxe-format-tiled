@@ -171,6 +171,7 @@ class Reader
     }
     
     return {
+      id: input.has.id ? Std.parseInt(input.att.id) : 0,
       name: input.att.name,
       offsetX: input.has.offsetx ? Std.parseInt(input.att.offsetx) : 0,
       offsetY: input.has.offsety ? Std.parseInt(input.att.offsety) : 0,
