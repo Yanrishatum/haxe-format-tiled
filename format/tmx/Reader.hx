@@ -735,7 +735,7 @@ class Reader
     }
     
     var object:TmxObject = {
-      id: Std.parseInt(obj.att.id), // if it's not here, you doing something wrong.
+      id: obj.has.id ? Std.parseInt(obj.att.id) : 0, // if it's not here, you doing something wrong.
       name: obj.has.name ? obj.att.name : "",
       type: obj.has.type ? obj.att.type : "",
       x: obj.has.x ? Std.parseFloat(obj.att.x) : 0,
