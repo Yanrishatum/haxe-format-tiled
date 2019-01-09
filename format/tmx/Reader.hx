@@ -66,6 +66,7 @@ class Reader
     
     return {
       version: map.att.version,
+      tiledVersion: map.has.tiledversion ? map.att.tiledversion : "",
       orientation: resolveOrientation(map.att.orientation),
       width: width,
       height: height,
@@ -80,6 +81,7 @@ class Reader
       staggerAxis: map.has.staggeraxis ? resolveStaggerAxis(map.att.staggeraxis) : null,
       hexSideLength: map.has.hexsidelength ? Std.parseInt(map.att.hexsidelength) : 0,
       nextObjectId: map.has.nextobjectid ? Std.parseInt(map.att.nextobjectid) : 0,
+      nextLayerId: map.has.nextlayerid ? Std.parseInt(map.att.nextlayerid): 0,
       infinite: map.has.infinite ? map.att.infinite == "1" : false
     };
   }
@@ -170,6 +172,7 @@ class Reader
     }
     
     return {
+      id: input.has.id ? Std.parseInt(input.att.id) : 0,
       name: input.att.name,
       offsetX: input.has.offsetx ? Std.parseInt(input.att.offsetx) : 0,
       offsetY: input.has.offsety ? Std.parseInt(input.att.offsety) : 0,
@@ -632,6 +635,7 @@ class Reader
     // Workaround to HaxeFoundation/haxe#6822
     var layer:TmxTileLayer = new TmxTileLayer(
       (input.hasNode.data ? resolveData(input.node.data) : null),
+      (input.has.id ? Std.parseInt(input.att.id) : 0),
       (input.has.name ? input.att.name : ""),
       (input.has.x ? Std.parseFloat(input.att.x) : 0),
       (input.has.y ? Std.parseFloat(input.att.y) : 0),
@@ -671,7 +675,7 @@ class Reader
       (input.has.draworder ? resolveDraworder(input.att.draworder) : TmxObjectGroupDrawOrder.Topdown),
       objects,
       (input.has.color ? Std.parseInt(input.att.color) : null),
-      
+      (input.has.id ? Std.parseInt(input.att.id) : 0),
       (input.has.name ? input.att.name : ""),
       (input.has.x ? Std.parseFloat(input.att.x) : 0),
       (input.has.y ? Std.parseFloat(input.att.y) : 0),
@@ -731,7 +735,7 @@ class Reader
     }
     
     var object:TmxObject = {
-      id: Std.parseInt(obj.att.id), // if it's not here, you doing something wrong.
+      id: obj.has.id ? Std.parseInt(obj.att.id) : 0, // if it's not here, you doing something wrong.
       name: obj.has.name ? obj.att.name : "",
       type: obj.has.type ? obj.att.type : "",
       x: obj.has.x ? Std.parseFloat(obj.att.x) : 0,
@@ -793,7 +797,7 @@ class Reader
   {
     var layer:TmxImageLayer = new TmxImageLayer(
       (input.hasNode.image ? resolveImage(input.node.image) : null),
-      
+      (input.has.id    ? Std.parseInt(input.att.id) : 0),
       (input.has.name    ? input.att.name : ""),
       (input.has.x       ? Std.parseFloat(input.att.x) : 0),
       (input.has.y       ? Std.parseFloat(input.att.y) : 0),
