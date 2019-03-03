@@ -364,4 +364,57 @@ class Tools
            Math.floor((tileset.image.height - tileset.margin * 2 + tileset.spacing) / (tileset.tileHeight + tileset.spacing));
   }
   
+  
+  /**
+    Returns visual tile position based on the map parameters and optionally on tileset sizes.
+    @param tileset Optional tileset reference. If present, it's tile sizes will be used for position calculation.
+    @param lid Optional local tile ID on tileset. Required for imageset tilesets.
+  **/
+  public static function tilePosition(map:TmxMap, tx:Int, ty:Int, ?tileset:TmxTileset, ?lid:Int):{ x:Float, y:Float }
+  {
+    var th:Int;
+    var ox:Float = 0;
+    var oy:Float = 0;
+    if (tileset == null)
+    {
+      th = map.tileHeight;
+    }
+    else 
+    {
+      th = tileset.tileHeight;
+      if (tileset.tileOffset != null)
+      {
+        ox = tileset.tileOffset.x;
+        oy = tileset.tileOffset.y;
+      }
+      if (th == 0) th = map.tileHeight;
+      if (lid != null)
+      {
+        for (t in tileset.tiles)
+        {
+          if (t.id == lid && t.image != null)
+          {
+            th = t.image.height;
+            break;
+          }
+        }
+      }
+    }
+    th -= map.tileHeight;
+    
+    switch (map.orientation)
+    {
+      case Orthogonal, Unknown(_):
+        return { x: map.tileWidth * tx + ox, y: map.tileHeight * ty - th + oy };
+      case Isometric:
+        var hw = map.tileWidth * .5;
+        var hh = map.tileHeight * .5;
+        return { x: tx * hw - ty * hw + ox, y: (ty + tx) * hh - th + oy };
+      case Staggered:
+        return null;
+      case Hexagonal:
+        return null;
+    }
+  }
+  
 }
