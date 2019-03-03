@@ -421,11 +421,6 @@ class Reader
     };
   }
   
-  private inline static var FLIPPED_HORIZONTALLY_FLAG:Int = 0x80000000;
-  private inline static var FLIPPED_VERTICALLY_FLAG:Int   = 0x40000000;
-  private inline static var FLIPPED_DIAGONALLY_FLAG:Int   = 0x20000000;
-  private inline static var FLAGS_MASK:Int = 0x1FFFFFFF;
-  
   private function resolveData(input:Fast, isTileData:Bool = true):TmxData
   {
     var encoding:TmxDataEncoding = TmxDataEncoding.None;
@@ -485,7 +480,7 @@ class Reader
               var chunkTiles:Array<TmxTile> = chunk.tiles;
               for (tile in node.nodes.tile)
               {
-                chunkTiles.push( { gid:Std.parseInt(tile.att.gid), flippedVertically:false, flippedHorizontally:false, flippedDiagonally:false } );
+                chunkTiles.push( new TmxTile(Std.parseInt(tile.att.gid)) );
               }
               chunks.push(chunk);
             }
@@ -497,7 +492,7 @@ class Reader
             for (info in input.nodes.tile)
             {
               // This tiles can have flipped flags? No documentation about this.
-              tiles.push( { gid:Std.parseInt(info.att.gid), flippedVertically:false, flippedHorizontally:false, flippedDiagonally:false } );
+              tiles.push( new TmxTile(Std.parseInt(info.att.gid)) );
             }
           }
         }
@@ -519,7 +514,7 @@ class Reader
               var chunk:TmxChunk = emptyChunk(node);
               var chunkTiles:Array<TmxTile> = chunk.tiles;
               var split:Array<String> = StringTools.trim(node.innerData).split(",");
-              for (str in split) chunkTiles.push( { gid:Std.parseInt(str), flippedVertically:false, flippedHorizontally:false, flippedDiagonally:false } );
+              for (str in split) chunkTiles.push( new TmxTile(Std.parseInt(str)) );
               chunks.push(chunk);
             }
           }
@@ -527,23 +522,13 @@ class Reader
           {
             tiles = new Array();
             var split:Array<String> = getRawData().split(",");
-            for (str in split) tiles.push( { gid:Std.parseInt(str), flippedVertically:false, flippedHorizontally:false, flippedDiagonally:false } );
+            for (str in split) tiles.push( new TmxTile(Std.parseInt(str)));
           }
         }
         else throw "CSV encoding available only for tile data";
       case TmxDataEncoding.Base64:
         var tile:Int;
         var flipH:Bool;
-        inline function parseTile():TmxTile
-        {
-          flipH = (tile & FLIPPED_HORIZONTALLY_FLAG) == FLIPPED_HORIZONTALLY_FLAG;
-          return {
-            gid: tile & FLAGS_MASK,
-            flippedHorizontally: flipH,
-            flippedVertically: (tile & FLIPPED_VERTICALLY_FLAG) == FLIPPED_VERTICALLY_FLAG,
-            flippedDiagonally: (tile & FLIPPED_DIAGONALLY_FLAG) == FLIPPED_DIAGONALLY_FLAG
-          };
-        }
         
         if (isTileData && input.hasNode.chunk)
         {
@@ -561,7 +546,7 @@ class Reader
             for (i in 0...tilesCount)
             {
               tile = d.readInt32();
-              chunkTiles.push(parseTile());
+              chunkTiles.push(new TmxTile(tile));
             }
             
             chunks.push(chunk);
@@ -583,7 +568,7 @@ class Reader
             for (i in 0...tilesCount)
             {
               tile = d.readInt32();
-              tiles.push(parseTile());
+              tiles.push(new TmxTile(tile));
             }
             data = null;
           }
@@ -707,10 +692,10 @@ class Reader
       #else
       var gid:Int = Std.parseInt(obj.att.gid);
       #end
-      flippedH = (gid & FLIPPED_HORIZONTALLY_FLAG) == FLIPPED_HORIZONTALLY_FLAG;
+      flippedH = (gid & @:privateAccess TmxTile.FLIPPED_HORIZONTALLY_FLAG) == @:privateAccess TmxTile.FLIPPED_HORIZONTALLY_FLAG;
       if (flippedH && gid < 0) gid = -gid;
-      flippedV = (gid & FLIPPED_VERTICALLY_FLAG) == FLIPPED_VERTICALLY_FLAG;
-      TmxObjectType.OTTile(gid & (FLAGS_MASK | FLIPPED_DIAGONALLY_FLAG));
+      flippedV = (gid & @:privateAccess TmxTile.FLIPPED_VERTICALLY_FLAG) == @:privateAccess TmxTile.FLIPPED_VERTICALLY_FLAG;
+      TmxObjectType.OTTile(gid & (@:privateAccess TmxTile.FLAGS_MASK | @:privateAccess TmxTile.FLIPPED_DIAGONALLY_FLAG));
     }
     else if (obj.hasNode.polygon)
     {

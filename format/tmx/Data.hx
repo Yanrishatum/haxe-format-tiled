@@ -478,17 +478,28 @@ class TmxChunk
 }
 
 /** Single tile in tile layer. */
-@:structInit
-class TmxTile
+abstract TmxTile(Int)
 {
+  private inline static var FLIPPED_HORIZONTALLY_FLAG:Int = 0x80000000;
+  private inline static var FLIPPED_VERTICALLY_FLAG:Int   = 0x40000000;
+  private inline static var FLIPPED_DIAGONALLY_FLAG:Int   = 0x20000000;
+  private inline static var FLAGS_MASK:Int = 0x1FFFFFFF;
+  
+  public inline function new(tile:Int) this = tile;
+  
   /** Global ID of tile. */
-  public var gid:Int;
+  public var gid(get, never):Int;
   /** Is tile flipped horizontally? Default: false */
-  @:optional public var flippedHorizontally:Bool;
+  @:optional public var flippedHorizontally(get, never):Bool;
   /** Is tile flipped vertically? Default: false */
-  @:optional public var flippedVertically:Bool;
+  @:optional public var flippedVertically(get, never):Bool;
   /** Is tile flipped diagonally? Default: false */
-  @:optional public var flippedDiagonally:Bool;
+  @:optional public var flippedDiagonally(get, never):Bool;
+  
+  inline function get_gid():Int return (this & FLAGS_MASK);
+  inline function get_flippedHorizontally():Bool return (this & FLIPPED_HORIZONTALLY_FLAG) != 0;
+  inline function get_flippedVertically():Bool return (this & FLIPPED_VERTICALLY_FLAG) != 0;
+  inline function get_flippedDiagonally():Bool return (this & FLIPPED_DIAGONALLY_FLAG) != 0;
 }
 
 /** Whether the objects are drawn according to the order of appearance ("index") or sorted by their y-coordinate ("topdown"). Defaults to "topdown". */
