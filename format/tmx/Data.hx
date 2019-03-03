@@ -46,6 +46,8 @@ class TmxMap
 {
   /** The TMX format version, generally 1.0. */
   public var version:String;
+  /** The Tiled version used to save the file (since Tiled 1.0.1). May be a date (for snapshot builds). */
+  public var tiledVersion:String;
   /** Map orientation. */
   public var orientation:TmxOrientation;
   /** The map width in tiles. */
@@ -83,6 +85,10 @@ class TmxMap
   /** Stores the next available ID for new objects. This number is stored to prevent reuse of the same ID after objects have been removed. (since 0.11) */
   @:optional public var nextObjectId:Int;
   
+  /**  Stores the next available ID for new layers. This number is stored to prevent reuse of the same ID after layers have been removed. (since 1.2)
+   */
+  @:optional public var nextLayerId:Int;
+
   /** Properties of the map */
   @:optional public var properties:TmxProperties;// Map<String, String>;
   
@@ -316,6 +322,8 @@ enum TmxLayer
 @:structInit
 class TmxGroup
 {
+  /** Unique ID of the layer. Each layer that added to a map gets a unique id. Even if a layer is deleted, no layer ever gets the same ID. Can not be changed in Tiled. (since Tiled 1.2) */
+  public var id:Int;
   /** The name of the group layer. */
   public var name:String;
   /** Rendering offset of the group layer in pixels. Defaults to 0. */
@@ -334,6 +342,8 @@ class TmxGroup
 
 class TmxBaseLayer
 {
+  /** Unique ID of the layer. Each layer that added to a map gets a unique id. Even if a layer is deleted, no layer ever gets the same ID. Can not be changed in Tiled. (since Tiled 1.2) */
+  public var id:Int;
   /** The name of the layer. */
   public var name:String;
   /** The x coordinate of the layer in tiles. Defaults to 0 and can no longer be changed in Tiled Qt. (Except ImageLayer) */
@@ -355,9 +365,10 @@ class TmxBaseLayer
   
   public var properties:TmxProperties;// Map<String, String>;
   
-  public function new(name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
+  public function new(id:Int, name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
     width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
   {
+    this.id = id;
     this.name = name;
     this.x = x;
     this.y = y;
@@ -382,10 +393,10 @@ class TmxImageLayer extends TmxBaseLayer
   @:optional public var image:TmxImage;
   
   public function new(image:TmxImage,
-    name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
+    id:Int, name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
     width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
   {
-    super(name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
+    super(id, name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
     this.image = image;
   }
 }
@@ -396,10 +407,10 @@ class TmxTileLayer extends TmxBaseLayer
   @:optional public var data:TmxData;
   
   public function new(data:TmxData,
-    name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
+    id:Int, name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
     width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
   {
-    super(name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
+    super(id, name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
     this.data = data;
   }
 }
@@ -525,10 +536,10 @@ class TmxObjectGroup extends TmxBaseLayer
   public var objects:Array<TmxObject>;
   
   public function new(drawOrder:TmxObjectGroupDrawOrder, objects:Array<TmxObject>, color:Null<Int>, 
-    name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
+    id:Int, name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
     width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
   {
-    super(name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
+    super(id, name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
     this.color = color;
     this.drawOrder = drawOrder;
     this.objects = objects;
@@ -620,7 +631,7 @@ class TmxText
   public var strikeout:Bool;
   /** Whether kerning should be used while rendering the text (1) or not (0). Default to 1. */
   public var kerning:Bool;
-  /** Horizontal alignment of the text within the object (left (default), center or right) */
+  /** Horizontal alignment of the text within the object (left (default), center, right or justify (since Tiled 1.2.1)) */
   public var halign:TmxHAlign;
   /** Vertical alignment of the text within the object (top (default), center or bottom) */
   public var valign:TmxVAlign;
@@ -634,6 +645,7 @@ abstract TmxHAlign(String) from String to String
   var Left = "left";
   var Center = "center";
   var Right = "right";
+  var Justify = "justify";
 }
 
 @:enum
