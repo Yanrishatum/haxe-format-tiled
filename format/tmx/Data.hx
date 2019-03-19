@@ -895,7 +895,7 @@ private class ImplTmxProperties
     var idx:Int = names.indexOf(name);
     if (idx == -1) return null;
     var type:TmxPropertyType = types[idx];
-    if (type != TmxPropertyType.PTInt || type != TmxPropertyType.PTColor) return null;
+    if (type != TmxPropertyType.PTInt && type != TmxPropertyType.PTColor) return null;
     
     var cached:Null<Int> = cache[idx];
     if (cached == null)
