@@ -152,7 +152,7 @@ class Reader
     var input:Fast = f.node.template;
     return {
       tileset: input.hasNode.tileset ? resolveTileset(input.node.tileset, null) : null,
-      object: resolveObject(input.node.object)
+      object: resolveObject(input.node.object, false)// don't apply object type template yet, because map object can override it
     };
   }
   
@@ -678,7 +678,7 @@ class Reader
     
   }
   
-  private function resolveObject(obj:Fast):TmxObject
+  private function resolveObject(obj:Fast, applyObjectTypeTemplate:Bool = true):TmxObject
   {
     var flippedV:Bool = false;
     var flippedH:Bool = false;
@@ -736,7 +736,30 @@ class Reader
       template: obj.has.template ? obj.att.template : null
     };
     
-    if (object.type != null && object.type != "" && resolveTypeTemplate != null)
+    if (object.template != null && resolveTemplate != null)
+    {
+      var template:TmxObjectTemplate = resolveTemplate(obj.att.template);
+      object.name = obj.has.name ? obj.att.name : template.object.name;
+      object.type = obj.has.type ? obj.att.type : template.object.type;
+      object.x = obj.has.x ? Std.parseFloat(obj.att.x) : template.object.x;
+      object.y = obj.has.y ? Std.parseFloat(obj.att.y) : template.object.y;
+      object.width = obj.has.width ? Std.parseFloat(obj.att.width) : template.object.width;
+      object.height = obj.has.height ? Std.parseFloat(obj.att.height) : template.object.height;
+      object.rotation = obj.has.rotation ? Std.parseFloat(obj.att.rotation) : template.object.rotation;
+      if (!obj.has.gid) // if gid exists, these are overriden on the map object
+      {
+        object.flippedHorizontally = template.object.flippedHorizontally;
+        object.flippedVertically = template.object.flippedVertically;
+      }
+      template.object.properties.propagateTo(object.properties);
+      object.objectType = switch (template.object.objectType)
+      {
+        case OTTile(gid): OTExternalTile(gid, template.tileset);
+        case _: template.object.objectType;
+      }
+    }
+    
+    if (applyObjectTypeTemplate && object.type != null && object.type != "" && resolveTypeTemplate != null)
     {
       var template:TmxObjectTypeTemplate = resolveTypeTemplate(object.type);
       Tools.applyObjectTypeTemplate(object, template);
