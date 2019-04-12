@@ -98,6 +98,8 @@ class TmxMap
   public var layers:Array<TmxLayer>;
   /** Is that map infinite? */
   public var infinite:Bool;
+  /** Local path of the TmxMap supplied during parsing. **/
+  public var localPath:Null<String>;
 }
 
 /**
@@ -570,6 +572,8 @@ enum TmxObjectType
   OTExternalTile(gid:Int, tileset:TmxTileset);
   /** Ellipse. Fills area in x/y/w/h. */
   OTEllipse;
+  /** Singular point. **/
+  OTPoint;
   /** Enclosed polygon determined by points with origin of object x/y. */
   OTPolygon(points:Array<TmxPoint>);
   /** Used to mark an object as a text object. Contains the actual text as character data. */

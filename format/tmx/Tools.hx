@@ -43,39 +43,51 @@ class Tools
   /**
    * Resolves OTExternalTile into OTTile.
    * Only works if templates and tilesets were resolved and their paths are relative.
+   * @param mapPath Optional local path to the map file used for accurate TSX path resolving when comparing tilesets.
    */
-  public static function resolveOTExternalTile(map:TmxMap):Void
+  public static function resolveOTExternalTile(map:TmxMap, ?mapPath:String):Void
   {
+    var tilesetPaths:Array<String> = new Array();
+    if (mapPath == null)
+      mapPath = map.localPath == null ? "" : Path.directory(map.localPath);
+    else
+      mapPath = Path.directory(mapPath);
+    for (tset in map.tilesets)
+    {
+      if (tset.source != null) tilesetPaths.push(Path.join([mapPath, tset.source]));
+      else tilesetPaths.push("");
+    }
     for (layer in map.layers)
     {
       switch (layer)
       {
         case LObjectGroup(_) | LGroup(_):
-          resolveOTExternalTileInternal(map, layer);
+          resolveOTExternalTileInternal(map, layer, mapPath, tilesetPaths);
         case _:
       }
     }
   }
   
-  private static function resolveOTExternalTileInternal(map:TmxMap, layer:TmxLayer):Void
+  private static function resolveOTExternalTileInternal(map:TmxMap, layer:TmxLayer, mapPath:String, paths:Array<String>):Void
   {
     switch (layer)
     {
       case LGroup(group):
-        for (layer in group.layers) resolveOTExternalTileInternal(map, layer);
+        for (layer in group.layers) resolveOTExternalTileInternal(map, layer, mapPath, paths);
       case LObjectGroup(group):
         for (obj in group.objects)
         {
           switch (obj.objectType)
           {
             case OTExternalTile(gid, tileset):
-              var templateDir = Path.directory(obj.template);
-              var tilesetPath = Path.normalize(Path.join([templateDir, tileset.source]));
-              var mapTileset = Lambda.find(map.tilesets, 
-                function (tileset) return Path.normalize(tileset.source) == tilesetPath);
-              if (mapTileset != null)
+              var templateSource = Path.join([mapPath, Path.directory(obj.template), tileset.source]);
+              for (i in 0...paths.length)
               {
-                obj.objectType = OTTile(mapTileset.firstGID + gid - tileset.firstGID);
+                if (paths[i] == templateSource)
+                {
+                  obj.objectType = OTTile(map.tilesets[i].firstGID + gid - tileset.firstGID);
+                  break;
+                }
               }
             case _:
           }

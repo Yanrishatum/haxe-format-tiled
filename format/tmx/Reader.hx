@@ -41,7 +41,7 @@ class Reader
    * Reads TMX file.
    * @return
    */
-  public function read(xml:Xml):TmxMap
+  public function read(xml:Xml, ?localPath:String):TmxMap
   {
     var map:Fast = new Fast(xml).node.map;
     
@@ -82,7 +82,8 @@ class Reader
       hexSideLength: map.has.hexsidelength ? Std.parseInt(map.att.hexsidelength) : 0,
       nextObjectId: map.has.nextobjectid ? Std.parseInt(map.att.nextobjectid) : 0,
       nextLayerId: map.has.nextlayerid ? Std.parseInt(map.att.nextlayerid): 0,
-      infinite: map.has.infinite ? map.att.infinite == "1" : false
+      infinite: map.has.infinite ? map.att.infinite == "1" : false,
+      localPath: localPath
     };
   }
   
@@ -713,6 +714,10 @@ class Reader
     {
       TmxObjectType.OTText(resolveText(obj.node.text));
     }
+    else if (obj.hasNode.point)
+    {
+      TmxObjectType.OTPoint;
+    }
     //else if (obj.hasNode.image) { } // TODO: Also had no docs and questionable
     else
     {
@@ -739,13 +744,13 @@ class Reader
     if (object.template != null && resolveTemplate != null)
     {
       var template:TmxObjectTemplate = resolveTemplate(obj.att.template);
-      object.name = obj.has.name ? obj.att.name : template.object.name;
-      object.type = obj.has.type ? obj.att.type : template.object.type;
-      object.x = obj.has.x ? Std.parseFloat(obj.att.x) : template.object.x;
-      object.y = obj.has.y ? Std.parseFloat(obj.att.y) : template.object.y;
-      object.width = obj.has.width ? Std.parseFloat(obj.att.width) : template.object.width;
-      object.height = obj.has.height ? Std.parseFloat(obj.att.height) : template.object.height;
-      object.rotation = obj.has.rotation ? Std.parseFloat(obj.att.rotation) : template.object.rotation;
+      if (!obj.has.name) object.name = template.object.name;
+      if (!obj.has.type) object.type = template.object.type;
+      if (!obj.has.x) object.x = template.object.x;
+      if (!obj.has.y) object.x = template.object.y;
+      if (!obj.has.width) object.width = template.object.width;
+      if (!obj.has.height) object.height = template.object.height;
+      if (!obj.has.rotation) object.rotation = template.object.rotation;
       if (!obj.has.gid) // if gid exists, these are overriden on the map object
       {
         object.flippedHorizontally = template.object.flippedHorizontally;
@@ -755,7 +760,7 @@ class Reader
       object.objectType = switch (template.object.objectType)
       {
         case OTTile(gid): OTExternalTile(gid, template.tileset);
-        case _: template.object.objectType;
+        default: template.object.objectType;
       }
     }
     
