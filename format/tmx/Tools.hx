@@ -1,4 +1,5 @@
 package format.tmx;
+import haxe.io.Path;
 import format.tmx.Data;
 
 /**
@@ -39,10 +40,49 @@ class Tools
     }
   }
   
-  //public static function applyTemplate(obj:TmxObject, template:TmxObjectTemplate):Void
-  //{
-    //obj.template
-  //}
+  /**
+   * Resolves OTExternalTile into OTTile.
+   * Only works if templates and tilesets were resolved and their paths are relative.
+   */
+  public static function resolveOTExternalTile(map:TmxMap):Void
+  {
+    for (layer in map.layers)
+    {
+      switch (layer)
+      {
+        case LObjectGroup(_) | LGroup(_):
+          resolveOTExternalTileInternal(map, layer);
+        case _:
+      }
+    }
+  }
+  
+  private static function resolveOTExternalTileInternal(map:TmxMap, layer:TmxLayer):Void
+  {
+    switch (layer)
+    {
+      case LGroup(group):
+        for (layer in group.layers) resolveOTExternalTileInternal(map, layer);
+      case LObjectGroup(group):
+        for (obj in group.objects)
+        {
+          switch (obj.objectType)
+          {
+            case OTExternalTile(gid, tileset):
+              var templateDir = Path.directory(obj.template);
+              var tilesetPath = Path.normalize(Path.join([templateDir, tileset.source]));
+              var mapTileset = Lambda.find(map.tilesets, 
+                function (tileset) return Path.normalize(tileset.source) == tilesetPath);
+              if (mapTileset != null)
+              {
+                obj.objectType = OTTile(mapTileset.firstGID + gid - tileset.firstGID);
+              }
+            case _:
+          }
+        }
+      case _:
+    }
+  }
   
   /**
    * Returns linear array of layers removing all nested groups. 

@@ -566,6 +566,8 @@ enum TmxObjectType
   OTRectangle;
   /** Tile-object, placed on x/y position. */
   OTTile(gid:Int);
+  /** Tile-object from a template. Using template's tileset. */
+  OTExternalTile(gid:Int, tileset:TmxTileset);
   /** Ellipse. Fills area in x/y/w/h. */
   OTEllipse;
   /** Enclosed polygon determined by points with origin of object x/y. */
