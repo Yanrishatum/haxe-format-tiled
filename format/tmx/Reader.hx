@@ -5,7 +5,7 @@ import haxe.io.BytesInput;
 import haxe.io.BytesOutput;
 import haxe.io.Input;
 import haxe.io.StringInput;
-import haxe.xml.Fast;
+import haxe.xml.Access;
 import haxe.zip.InflateImpl;
 import haxe.zip.Uncompress;
 
@@ -16,7 +16,7 @@ import haxe.zip.Uncompress;
 class Reader
 {
   private var xml:Xml;
-  private var f:Fast;
+  private var f:Access;
   
   private var customUncompressors:Map<String, String->Bytes>;
   private var customEncoders:Map<String, Bytes->String->Array<TmxTile>>;
@@ -29,7 +29,7 @@ class Reader
   public function new(xml:Xml) 
   {
     this.xml = xml;
-    this.f = new Fast(xml);
+    this.f = new Access(xml);
   }
   
   /**
@@ -39,7 +39,7 @@ class Reader
   public function read():TmxMap
   {
     lastObjectId = 0;
-    var map:Fast = f.node.map;
+    var map:Access = f.node.map;
     
     var properties:Map<String, String> = resolveProperties(map);
     var tilesets:Array<TmxTileset> = new Array();
@@ -138,7 +138,7 @@ class Reader
     }
   }
   
-  private inline function resolveTileset(input:Fast, root:TmxTileset):TmxTileset
+  private inline function resolveTileset(input:Access, root:TmxTileset):TmxTileset
   {
     var properties:Map<String, String> = resolveProperties(input);
     var terrains:Array<TmxTerrain> = new Array();
@@ -150,7 +150,7 @@ class Reader
     
     if (hasTileOffset)
     {
-      var node:Fast = input.node.tileoffset;
+      var node:Access = input.node.tileoffset;
       tileOffset = { x:Std.parseInt(node.att.x), y:Std.parseInt(node.att.y) };
     }
     
@@ -231,7 +231,7 @@ class Reader
     
   }
   
-  private function resolveImage(input:Fast):TmxImage
+  private function resolveImage(input:Access):TmxImage
   {
     return 
     {
@@ -250,7 +250,7 @@ class Reader
   private inline static var FLIPPED_DIAGONALLY_FLAG:Int   = 0x20000000;
   private inline static var FLAGS_MASK:Int = 0x1FFFFFFF;
   
-  private function resolveData(input:Fast, isTileData:Bool = true):TmxData
+  private function resolveData(input:Access, isTileData:Bool = true):TmxData
   {
     var encoding:TmxDataEncoding = TmxDataEncoding.None;
     if (input.has.encoding)
@@ -363,7 +363,7 @@ class Reader
     }
   }
   
-  private function resolveTileLayer(input:Fast):TmxTileLayer
+  private function resolveTileLayer(input:Access):TmxTileLayer
   {
     return {
       name:input.att.name,
@@ -390,7 +390,7 @@ class Reader
     }
   }
   
-  private function resolveObjectGroup(input:Fast):TmxObjectGroup
+  private function resolveObjectGroup(input:Access):TmxObjectGroup
   {
     var objects:Array<TmxObject> = new Array();
     
@@ -454,7 +454,7 @@ class Reader
     };
   }
   
-  private function readPoints(input:Fast):Array<TmxPoint>
+  private function readPoints(input:Access):Array<TmxPoint>
   {
     var arr:Array<TmxPoint> = new Array();
     if (input.has.points)
@@ -469,7 +469,7 @@ class Reader
     return arr;
   }
   
-  private function resolveImageLayer(input:Fast):TmxImageLayer
+  private function resolveImageLayer(input:Access):TmxImageLayer
   {
     return {
       name:input.att.name,
@@ -486,7 +486,7 @@ class Reader
     };
   }
   
-  private function resolveProperties(input:Fast):Map<String, String>
+  private function resolveProperties(input:Access):Map<String, String>
   {
     var props:Map<String, String> = new Map();
     if (input.hasNode.properties)
