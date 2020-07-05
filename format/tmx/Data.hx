@@ -364,11 +364,13 @@ class TmxBaseLayer
   public var offsetX:Null<Int>;
   /** Rendering offset for this layer in pixels. Defaults to 0. (since 0.14) */
   public var offsetY:Null<Int>;
+  /** tint color of the layer */
+  public var tintColor:Int;
   
   public var properties:TmxProperties;// Map<String, String>;
   
   public function new(id:Int, name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
-    width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
+    width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, tintColor:Null<Int>, properties:TmxProperties)
   {
     this.id = id;
     this.name = name;
@@ -380,6 +382,7 @@ class TmxBaseLayer
     this.height = height;
     this.opacity = opacity;
     this.visible = visible;
+    this.tintColor = tintColor;
     this.properties = properties;
   }
   
@@ -396,9 +399,9 @@ class TmxImageLayer extends TmxBaseLayer
   
   public function new(image:TmxImage,
     id:Int, name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
-    width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
+    width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, tintColor:Null<Int>, properties:TmxProperties)
   {
-    super(id, name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
+    super(id, name, x, y, offsetX, offsetY, width, height, opacity, visible, tintColor, properties);
     this.image = image;
   }
 }
@@ -410,9 +413,9 @@ class TmxTileLayer extends TmxBaseLayer
   
   public function new(data:TmxData,
     id:Int, name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
-    width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
+    width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, tintColor:Null<Int>, properties:TmxProperties)
   {
-    super(id, name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
+    super(id, name, x, y, offsetX, offsetY, width, height, opacity, visible, tintColor, properties);
     this.data = data;
   }
 }
@@ -541,9 +544,9 @@ class TmxObjectGroup extends TmxBaseLayer
   
   public function new(drawOrder:TmxObjectGroupDrawOrder, objects:Array<TmxObject>, color:Null<Int>, 
     id:Int, name:String, x:Null<Float>, y:Null<Float>, offsetX:Null<Int>, offsetY:Null<Int>,
-    width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, properties:TmxProperties)
+    width:Null<Int>, height:Null<Int>, opacity:Null<Float>, visible:Bool, tintColor:Null<Int>, properties:TmxProperties)
   {
-    super(id, name, x, y, offsetX, offsetY, width, height, opacity, visible, properties);
+    super(id, name, x, y, offsetX, offsetY, width, height, opacity, visible, tintColor, properties);
     this.color = color;
     this.drawOrder = drawOrder;
     this.objects = objects;
