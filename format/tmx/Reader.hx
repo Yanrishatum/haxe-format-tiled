@@ -631,6 +631,7 @@ class Reader
       (input.has.height ? Std.parseInt(input.att.height) : height),
       (input.has.opacity ? Std.parseFloat(input.att.opacity) : 1),
       (input.has.visible ? input.att.visible == "1" : true),
+      (input.has.tintcolor ? parseColor(input.att.tintcolor):0xFFFFFF),
       resolveProperties(input)
     );
     
@@ -671,6 +672,7 @@ class Reader
       (input.has.height ? Std.parseInt(input.att.height) : height),
       (input.has.opacity ? Std.parseFloat(input.att.opacity) : 1),
       (input.has.visible ? input.att.visible == "1" : true),
+      (input.has.tintcolor ? parseColor(input.att.tintcolor):0xFFFFFF),
       resolveProperties(input)
     );
     // group.drawOrder = input.has.draworder ? resolveDraworder(input.att.draworder) : TmxObjectGroupDrawOrder.Topdown;
@@ -820,9 +822,15 @@ class Reader
       (input.has.height  ? Std.parseInt(input.att.height) : height),
       (input.has.opacity ? Std.parseFloat(input.att.opacity) : 1),
       (input.has.visible ? input.att.visible == "1" : true),
+      (input.has.tintcolor ? parseColor(input.att.tintcolor):0xFFFFFF),
       resolveProperties(input)
     );
     return layer;
+  }
+  private function parseColor(color:String):Null<Int>
+  {
+    if (color.length == 7) return 0xff000000 | Std.parseInt("0x" + color.substr(1));
+    return Std.parseInt("0x" + color.substr(1));
   }
   
   private function resolveProperties(input:Fast):TmxProperties
