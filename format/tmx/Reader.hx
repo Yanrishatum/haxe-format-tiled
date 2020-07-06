@@ -827,7 +827,8 @@ class Reader
     );
     return layer;
   }
-  private function parseColor(color:String):Null<Int> {
+  private function parseColor(color:String):Null<Int>
+  {
     if (color.length == 7) return 0xff000000 | Std.parseInt("0x" + color.substr(1));
     return Std.parseInt("0x" + color.substr(1));
   }
