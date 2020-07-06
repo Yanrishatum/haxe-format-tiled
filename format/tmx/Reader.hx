@@ -828,7 +828,8 @@ class Reader
     return layer;
   }
   private function parseColor(color:String):Null<Int> {
-    return Std.parseInt("0x"+color.substr(1));
+    if (color.length == 7) return 0xff000000 | Std.parseInt("0x" + color.substr(1));
+    return Std.parseInt("0x" + color.substr(1));
   }
   
   private function resolveProperties(input:Fast):TmxProperties
