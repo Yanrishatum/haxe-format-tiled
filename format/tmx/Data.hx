@@ -364,7 +364,7 @@ class TmxBaseLayer
   public var offsetX:Null<Int>;
   /** Rendering offset for this layer in pixels. Defaults to 0. (since 0.14) */
   public var offsetY:Null<Int>;
-  /** tint color of the layer */
+  /** A color that is multiplied with any graphics drawn by this layer. (since 1.4) */
   public var tintColor:Int;
   
   public var properties:TmxProperties;// Map<String, String>;
