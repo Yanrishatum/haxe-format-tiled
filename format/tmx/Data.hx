@@ -214,10 +214,10 @@ class TmxWangSetTile
   /** The tile ID. */
   public var tileID:Int;
   /**
-   * The Wang ID, which is a 32-bit unsigned integer stored in the format 0xCECECECE
-   * (where each C is a corner color and each E is an edge color, from right to left clockwise, starting with the top edge)
+   * The Wang ID, given by a comma-separated list of indexes (starting from 1, because 0 means _unset_) referring to the 
+   * Wang colors in the Wang set in the following order: top, top right, right, bottom right, bottom, bottom left, left, top left.
    */
-  public var wangID:Int; // TODO: Abstract
+  public var wangID:String;
 }
 
 /**
