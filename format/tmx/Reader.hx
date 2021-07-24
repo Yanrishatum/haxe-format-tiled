@@ -387,7 +387,7 @@ class Reader
     {
       tiles.push( {
         tileID: node.has.tileid ? Std.parseInt(node.att.tileid) : 0,
-        wangID: node.has.wangid ? Std.parseInt(node.att.wangid) : 0
+        wangID: node.has.wangid ? node.att.wangid : "0,0,0,0,0,0,0,0"
       });
     }
     
