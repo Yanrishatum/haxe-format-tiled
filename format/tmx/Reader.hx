@@ -525,7 +525,9 @@ class Reader
           else
           {
             tiles = new Array();
-            var split:Array<String> = getRawData().split(",");
+            // Only allow digits and commas as valid data
+            var r = ~/[^\d,]/g;
+            var split:Array<String> = r.replace(getRawData(),'').split(",");
             for (str in split) tiles.push( new TmxTile(Std.parseInt(str)));
           }
         }
