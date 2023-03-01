@@ -1,6 +1,9 @@
 # haxe-format-tiled
 Tiled format support without additional dependencies (like OpenFL).
 
+# Deprecation notice
+This library is deprecated and won't be maintained in favor of its successor - [tiledhx](https://github.com/Yanrishatum/tiledhx)
+
 ## Feature-support
 * Currently library supports Tiled 1.1
 When Tiled will get new features that you will need to utilize, please create an Issue (or better a PR ;) ). I do not watch Tiled development closely, but will provide library updates for new features.
